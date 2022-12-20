@@ -1,0 +1,12 @@
+{
+  "name": "Figma Exporter",
+  "id": "1183975085577339184",
+  "api": "1.0.0",
+  "editorType": [
+    "figma"
+  ],
+  "permissions": [],
+  "enablePrivatePluginApi": true,
+  "main": "dist/code.js",
+  "ui": "dist/index.html"
+}

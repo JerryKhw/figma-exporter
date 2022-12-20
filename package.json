@@ -1,0 +1,44 @@
+{
+  "name": "@jerry/figma-exporter",
+  "version": "1.0.0",
+  "description": "Figma Exporter",
+  "scripts": {
+    "test": "npm run tsc && npm run build",
+    "format": "prettier --write .",
+    "tsc": "npm run tsc:main && npm run tsc:ui",
+    "tsc:main": "tsc --noEmit -p src/plugin",
+    "tsc:ui": "tsc --noEmit -p src/ui",
+    "tsc:watch": "concurrently -n widget,iframe \"npm run tsc:main -- --watch --preserveWatchOutput\" \"npm run tsc:ui -- --watch --preserveWatchOutput\"",
+    "build": "npm run build:ui && npm run build:main -- --minify",
+    "build:main": "node esbuild.js",
+    "build:ui": "npx vite build --minify esbuild --emptyOutDir=false",
+    "build:watch": "concurrently -n widget,iframe \"node esbuild-watch.js\" \"npm run build:ui -- --watch\"",
+    "dev": "concurrently -n tsc,build,vite 'npm:tsc:watch' 'npm:build:watch' 'vite'"
+  },
+  "author": {
+    "name": "JERRY/JIHOON KIM",
+    "email": "hwjameshw@gmail.com",
+    "url": "http://github.com/hwJames"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.57.1",
+    "@types/file-saver": "^2.0.5",
+    "@types/react": "^18.0.26",
+    "@types/react-dom": "^18.0.9",
+    "@vitejs/plugin-react-refresh": "^1.3.6",
+    "concurrently": "^7.6.0",
+    "esbuild": "^0.16.4",
+    "prettier": "^2.8.1",
+    "typescript": "^4.9.4",
+    "vite": "^4.0.0",
+    "vite-plugin-singlefile": "^0.13.2",
+    "vite-svg-loader": "^3.6.0"
+  }
+}

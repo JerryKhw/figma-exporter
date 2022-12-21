@@ -136,7 +136,6 @@ const App = () => {
     setPreview(tmp)
   }, [preview])
 
-
   const saveZip = useCallback((zip: JSZip, exports: ExportDefault[] | ExportScale3[] | ExportScale5[]) => {
     zip.generateAsync({ type: "blob" })
       .then((content: Blob) => {
@@ -196,11 +195,29 @@ const App = () => {
             const zip = new JSZip()
             const exports: ExportDefault[] = data
 
-            exports.map((exportData) => {
-              zip.file(`${exportData.name}.${exportData.format}`, toBase64(exportData.buffer), { base64: true })
-            })
+            if(exports.length > 1) {
+              exports.map((exportData) => {
+                zip.file(`${exportData.name}.${exportData.format}`, toBase64(exportData.buffer), { base64: true })
+              })
+  
+              saveZip(zip, exports)
+            } else if(exports.length == 1) {
+              const exportData = exports[0]
 
-            saveZip(zip, exports)
+              saveAs(new Blob([exportData.buffer]), `${exportData.name}.${exportData.format}`)
+
+              parent.postMessage({
+                pluginMessage: {
+                  type: UiMessageType.SETTING,
+                  data: {
+                    format: format,
+                    platform: platform,
+                  }
+                }
+              }, "*");
+              
+              setLoading(false)
+            }
 
             break
           }

@@ -1,2 +1,26 @@
-# Figma Exporter
-![](https://s3-alpha-sig.figma.com/plugins/1183975085577339184/44993/413428f8-703a-4d26-990e-57b355ea53fe-cover?Expires=1681084800&Signature=N3pnSetz2EjydUO5-ekJzweOCn0EbYWG7p4IRRv8uCXLcRkVKZwKZdwSOtPW9d9zF497r6J2iKPZSIJyZ5La6UBxfErPMdk9hBhrxH1vmMJweArOeEeZzdL6faLMRNr23aFQr2ryN5YbReH3uP88AX8CnNzjyRPT1VXQf3Mc1sXAUfkEQYlw1ZMqHdT5vcT01y9Uyif0Qs8INGUzJV58EU1utKNTC373bO2QzTYaTlI0twUpmnlt3ruI1fT0AXUjGOEa6DnqV6WWZZjqy97xkmoTPX70f9SB2FJlACet-65OuG2pTOPPTh409fOIHhp4mul4DgcHAfHwqKGeKLLyZA__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4)
+
+<div align="center">
+  <a href="https://github.com/JerryKhw/figma-exporter">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
+
+  <h3 align="center">Figma Exporter</h3>
+
+  <p align="center">
+    Easily export assets of png/jpg/webp/svg/pdf for Web/Android/Flutter/iOS/ReactNative.
+    <br />
+    <a href="https://www.figma.com/community/plugin/1183975085577339184/Figma-Exporter"><strong>View in figma »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/JerryKhw/figma-exporter/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/JerryKhw/figma-exporter/issues">Request Feature</a>
+  </p>
+</div>
+
+<br/>
+
+[![Figma Exporter Screen Shot][screenshot]](https://www.figma.com/community/plugin/1183975085577339184/Figma-Exporte)
+
+
+[screenshot]: images/screenshot.png

@@ -1,6 +1,6 @@
 {
   "name": "@jerry/figma-exporter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Figma Exporter",
   "scripts": {
     "test": "npm run tsc && npm run build",
@@ -18,7 +18,7 @@
   "author": {
     "name": "JERRY/JIHOON KIM",
     "email": "hwjameshw@gmail.com",
-    "url": "http://github.com/hwJames"
+    "url": "https://github.com/JerryKhw"
   },
   "license": "MIT",
   "dependencies": {

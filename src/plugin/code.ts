@@ -83,14 +83,19 @@ figma.ui.onmessage = async (msg: UiMessage) => {
       break
     }
     case UiMessageType.EXPORT: {
-      const { preview, format, platform }: ExportOption = data
+      const { preview, format, platform, prefix, suffix }: ExportOption = data
 
       const tmps: TmpExport[] = []
       preview.map((pre) => {
         const node = figma.currentPage.findOne((node) => node.id == pre.id)
         if (node != null) {
+          const tmpNames = pre.name.split("/");
+          tmpNames[tmpNames.length - 1] = prefix + tmpNames[tmpNames.length - 1] + suffix
+
+          const tmpName = tmpNames.join("/");
+
           tmps.push({
-            name: pre.name,
+            name: tmpName,
             node: node
           })
         }

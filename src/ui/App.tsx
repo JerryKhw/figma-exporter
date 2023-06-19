@@ -60,8 +60,8 @@ const App = () => {
   const [preview, setPreview] = useState<PreviewUi[]>([])
   const [format, setFormat] = useState<string>(Format.PNG)
   const [platform, setPlatform] = useState<string>(Platform.WEB)
-  const [prefix, setPrefix] = useState<string>()
-  const [suffix, setSuffix] = useState<string>()
+  const [prefix, setPrefix] = useState<string>("")
+  const [suffix, setSuffix] = useState<string>("")
 
   const formatDisabled = useMemo(() => {
     return format == Format.SVG || format == Format.PDF
@@ -179,8 +179,8 @@ const App = () => {
       if (setting.platform != null) {
         setPlatform(setting.platform)
       }
-      setPrefix(setting.prefix)
-      setSuffix(setting.suffix)
+      setPrefix(setting.prefix ?? "")
+      setSuffix(setting.suffix ?? "")
     }
   }, [setting])
 

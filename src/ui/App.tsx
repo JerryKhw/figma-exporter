@@ -60,6 +60,8 @@ const App = () => {
   const [preview, setPreview] = useState<PreviewUi[]>([])
   const [format, setFormat] = useState<string>(Format.PNG)
   const [platform, setPlatform] = useState<string>(Platform.WEB)
+  const [prefix, setPrefix] = useState<string>()
+  const [suffix, setSuffix] = useState<string>()
 
   const formatDisabled = useMemo(() => {
     return format == Format.SVG || format == Format.PDF
@@ -75,6 +77,14 @@ const App = () => {
 
   const platformOnChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
     setPlatform(event.target.value)
+  }, [])
+
+  const prefixOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setPrefix(event.target.value)
+  }, [])
+
+  const suffixOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSuffix(event.target.value)
   }, [])
 
   const onExport = useCallback(() => {
@@ -109,10 +119,12 @@ const App = () => {
           preview: preview,
           format: format,
           platform: platform,
+          prefix: prefix,
+          suffix: suffix,
         }
       }
     }, "*");
-  }, [previewNames, preview, format, platform])
+  }, [previewNames, preview, format, platform, prefix, suffix])
 
   const previewOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>, id: string) => {
     const tmp = preview.map((pre: PreviewUi) => {
@@ -152,12 +164,14 @@ const App = () => {
             data: {
               format: format,
               platform: platform,
+              prefix: prefix,
+              suffix: suffix,
             }
           }
         }, "*");
         setLoading(false)
       })
-  }, [format, platform])
+  }, [format, platform, prefix, suffix])
 
   useEffect(() => {
     if (setting != undefined) {
@@ -165,6 +179,8 @@ const App = () => {
       if (setting.platform != null) {
         setPlatform(setting.platform)
       }
+      setPrefix(setting.prefix)
+      setSuffix(setting.suffix)
     }
   }, [setting])
 
@@ -229,11 +245,13 @@ const App = () => {
             exports.map((exportData) => {
               switch (type) {
                 case PluginMessageType.EXPORT_ANDROID: {
-                  zip.file(`drawable-mdpi/${exportData.name}.${exportData.format}`, toBase64(exportData.scale1), { base64: true })
-                  zip.file(`drawable-hdpi/${exportData.name}.${exportData.format}`, toBase64(exportData.scale1_5), { base64: true })
-                  zip.file(`drawable-xhdpi/${exportData.name}.${exportData.format}`, toBase64(exportData.scale2), { base64: true })
-                  zip.file(`drawable-xxhdpi/${exportData.name}.${exportData.format}`, toBase64(exportData.scale3), { base64: true })
-                  zip.file(`drawable-xxxhdpi/${exportData.name}.${exportData.format}`, toBase64(exportData.scale4), { base64: true })
+                  const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_");
+
+                  zip.file(`drawable-mdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale1), { base64: true })
+                  zip.file(`drawable-hdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale1_5), { base64: true })
+                  zip.file(`drawable-xhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale2), { base64: true })
+                  zip.file(`drawable-xxhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale3), { base64: true })
+                  zip.file(`drawable-xxxhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale4), { base64: true })
 
                   break
                 }
@@ -294,6 +312,9 @@ const App = () => {
                 <option value="" disabled={true}>Platform</option>
                 {platformList.map((item) => <option value={item.value}>{item.name}</option>)}
               </select>
+
+              <input placeholder="prefix" value={prefix} onChange={prefixOnChange}  />
+              <input placeholder="suffix" value={suffix} onChange={suffixOnChange}  />
 
               <div className="spacer" />
 

@@ -25,12 +25,16 @@ export interface PreviewUi {
 export interface Setting {
     format: string,
     platform: string | null,
+    prefix: string,
+    suffix: string,
 }
 
 export interface ExportOption {
     preview: PreviewUi[],
     format: string,
     platform: string | null,
+    prefix: string,
+    suffix: string,
 }
 
 export interface Export {

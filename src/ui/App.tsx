@@ -88,6 +88,17 @@ const App = () => {
   }, [])
 
   const onExport = useCallback(() => {
+    if(preview.length == 0) {
+      parent.postMessage({
+        pluginMessage: {
+          type: UiMessageType.ERROR,
+          data: "Select Layer"
+        }
+      }, "*");
+
+      return false
+    }
+    
     if (preview.filter((pre) => pre.name == "").length > 0) {
       parent.postMessage({
         pluginMessage: {

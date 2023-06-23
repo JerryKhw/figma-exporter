@@ -3,8 +3,10 @@
   "id": "1183975085577339184",
   "api": "1.0.0",
   "editorType": [
-    "figma"
+    "figma",
+    "dev"
   ],
+  "capabilities": ["inspect"],
   "permissions": [],
   "enablePrivatePluginApi": true,
   "main": "dist/code.js",

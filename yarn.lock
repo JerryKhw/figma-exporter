@@ -437,10 +437,10 @@
   resolved "https://registry.yarnpkg.com/@esbuild/win32-x64/-/win32-x64-0.17.19.tgz#8cfaf2ff603e9aabb910e9c0558c26cf32744061"
   integrity sha512-lAhycmKnVOuRYNtRtatQR1LPQf2oYCkRGkSFnseDAKPl8lu5SOsK/e1sXe5a0Pc5kHIHe6P2I/ilntNv2xf3cA==
 
-"@figma/plugin-typings@^1.57.1":
-  version "1.65.0"
-  resolved "https://registry.yarnpkg.com/@figma/plugin-typings/-/plugin-typings-1.65.0.tgz#5a29f3fa105f8aeb276d8d29c12b292995f54ff9"
-  integrity sha512-egLk8ygMKl4e/bs7PdeIFU0fuQuhGAjyX+pyxS/AZ8X1x0QLPaO6r64ekJt+gvmQTFdcaK2CLmF2zqLU+5Hhcg==
+"@figma/plugin-typings@^1.68.0":
+  version "1.68.0"
+  resolved "https://registry.yarnpkg.com/@figma/plugin-typings/-/plugin-typings-1.68.0.tgz#3f1edd60d37473aa1596cd4b300eeb9ee01cdaa2"
+  integrity sha512-hT+iqf5CRRqKI7NmPdwml+Ld/mG1QM8VcZZURV2AowIy6vC3VQ2iIIT5d7ulDnQU+WzQDvaGaDAw/J5X6tQ2Ww==
 
 "@jridgewell/gen-mapping@^0.3.0", "@jridgewell/gen-mapping@^0.3.2":
   version "0.3.3"

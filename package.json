@@ -1,6 +1,6 @@
 {
   "name": "@jerry/figma-exporter",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Figma Exporter",
   "scripts": {
     "test": "npm run tsc && npm run build",
@@ -28,7 +28,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@figma/plugin-typings": "^1.57.1",
+    "@figma/plugin-typings": "^1.68.0",
     "@types/file-saver": "^2.0.5",
     "@types/node": "^18.11.17",
     "@types/react": "^18.0.26",

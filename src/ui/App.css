@@ -74,12 +74,13 @@ footer {
   border-top: 1px solid grey;
   box-sizing: border-box;
   display: flex;
+  flex-wrap: wrap;
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 55px;
-  padding: 10px;
+  min-height: 55px;
+  padding: 7.5px;
   background-color: white;
 }
 
@@ -90,6 +91,7 @@ footer select {
 
   padding: 5px 14px 5px 10px;
   margin: 0;
+  margin: 2.5px;
   margin-right: 5px;
 
   border: 1px solid #aaa;
@@ -103,7 +105,7 @@ footer input {
   appearance: none;
 
   padding: 5px 14px 5px 10px;
-  margin: 0;
+  margin: 2.5px;
   margin-right: 5px;
 
   border: 1px solid #aaa;
@@ -119,6 +121,7 @@ footer button {
   border-radius: 5px;
   box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.04);
   border: 0px;
+  margin: 2.5px;
   background-color: #0d99ff;
   color: white;
   font-size: 13px;

@@ -42,8 +42,7 @@ const getPreview = async (node: SceneNode): Promise<Preview> => {
   }
 }
 
-
-if (figma.currentPage.selection.length <= 0) {
+if (figma.editorType !== "dev" && figma.currentPage.selection.length <= 0) {
   figma.notify("Figma Exporter : Select Layer", {
     error: true
   })
@@ -67,6 +66,22 @@ if (figma.currentPage.selection.length <= 0) {
   )
 }
 
+if (figma.editorType === "dev") {
+  figma.on('selectionchange', () => {
+    if (figma.currentPage.selection.length > 0) {
+      Promise.all(figma.currentPage.selection.map((node) => getPreview(node))).then(
+        (preview) => {
+          figma.ui.postMessage({
+            type: PluginMessageType.PREVIEW,
+            data: preview,
+          })
+        }
+      )
+    }
+  })
+}
+
+
 figma.ui.onmessage = async (msg: UiMessage) => {
   const { type, data } = msg
   switch (type) {
@@ -79,13 +94,18 @@ figma.ui.onmessage = async (msg: UiMessage) => {
     case UiMessageType.SETTING: {
       setData(DataKey.SETTING, data)
 
-      figma.closePlugin("Figma Exporter : Success Export")
+      if (figma.editorType !== "dev") {
+        figma.closePlugin("Figma Exporter : Success Export")
+      } else {
+        figma.notify("Figma Exporter : Success Export")
+      }
       break
     }
     case UiMessageType.EXPORT: {
       const { preview, format, platform, prefix, suffix }: ExportOption = data
 
       const tmps: TmpExport[] = []
+
       preview.map((pre) => {
         const node = figma.currentPage.findOne((node) => node.id == pre.id)
         if (node != null) {

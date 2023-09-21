@@ -1,6 +1,6 @@
 {
   "name": "@jerry/figma-exporter",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Figma Exporter",
   "scripts": {
     "test": "npm run tsc && npm run build",

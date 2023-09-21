@@ -6,6 +6,7 @@ import { Loading, PreviewItem } from "./component";
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
 import "./App.css";
+import { arrayBufferToWebP } from "webp-converter-browser";
 
 const formatList = [
   {
@@ -88,7 +89,7 @@ const App = () => {
   }, [])
 
   const onExport = useCallback(() => {
-    if(preview.length == 0) {
+    if (preview.length == 0) {
       parent.postMessage({
         pluginMessage: {
           type: UiMessageType.ERROR,
@@ -98,7 +99,7 @@ const App = () => {
 
       return false
     }
-    
+
     if (preview.filter((pre) => pre.name == "").length > 0) {
       parent.postMessage({
         pluginMessage: {
@@ -196,7 +197,7 @@ const App = () => {
   }, [setting])
 
   useEffect(() => {
-    window.onmessage = (event) => {
+    window.onmessage = async (event) => {
       if (event.data.pluginMessage) {
         const { type, data } = event.data.pluginMessage;
 
@@ -222,16 +223,30 @@ const App = () => {
             const zip = new JSZip()
             const exports: ExportDefault[] = data
 
-            if(exports.length > 1) {
-              exports.map((exportData) => {
-                zip.file(`${exportData.name}.${exportData.format}`, toBase64(exportData.buffer), { base64: true })
-              })
-  
+            if (exports.length > 1) {
+              await Promise.all(
+                exports.map(async (exportData) => {
+                  let blob = new Blob([exportData.buffer]);
+
+                  if (exportData.format == "webp") {
+                    blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 });
+                  }
+
+                  zip.file(`${exportData.name}.${exportData.format}`, blob)
+                })
+              )
+
               saveZip(zip, exports)
-            } else if(exports.length == 1) {
+            } else if (exports.length == 1) {
               const exportData = exports[0]
 
-              saveAs(new Blob([exportData.buffer]), `${exportData.name}.${exportData.format}`)
+              let blob = new Blob([exportData.buffer]);
+
+              if (exportData.format == "webp") {
+                blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 })
+              }
+
+              saveAs(blob, `${exportData.name}.${exportData.format}`)
 
               parent.postMessage({
                 pluginMessage: {
@@ -242,7 +257,7 @@ const App = () => {
                   }
                 }
               }, "*");
-              
+
               setLoading(false)
             }
 
@@ -253,28 +268,44 @@ const App = () => {
             const zip = new JSZip()
             const exports: ExportScale5[] = data
 
-            exports.map((exportData) => {
-              switch (type) {
-                case PluginMessageType.EXPORT_ANDROID: {
-                  const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_");
+            await Promise.all(
+              exports.map(async (exportData) => {
+                let scale1 = new Blob([exportData.scale1]);
+                let scale1_5 = new Blob([exportData.scale1_5]);
+                let scale2 = new Blob([exportData.scale2]);
+                let scale3 = new Blob([exportData.scale3]);
+                let scale4 = new Blob([exportData.scale4]);
 
-                  zip.file(`drawable-mdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale1), { base64: true })
-                  zip.file(`drawable-hdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale1_5), { base64: true })
-                  zip.file(`drawable-xhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale2), { base64: true })
-                  zip.file(`drawable-xxhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale3), { base64: true })
-                  zip.file(`drawable-xxxhdpi/${exportName}.${exportData.format}`, toBase64(exportData.scale4), { base64: true })
+                if (exportData.format == "webp") {
+                  scale1 = await arrayBufferToWebP(exportData.scale1, { quality: 100 });
+                  scale1_5 = await arrayBufferToWebP(exportData.scale1_5, { quality: 100 });
+                  scale2 = await arrayBufferToWebP(exportData.scale2, { quality: 100 });
+                  scale3 = await arrayBufferToWebP(exportData.scale3, { quality: 100 });
+                  scale4 = await arrayBufferToWebP(exportData.scale4, { quality: 100 });
+                }
 
-                  break
+                switch (type) {
+                  case PluginMessageType.EXPORT_ANDROID: {
+                    const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_");
+
+                    zip.file(`drawable-mdpi/${exportName}.${exportData.format}`, scale1);
+                    zip.file(`drawable-hdpi/${exportName}.${exportData.format}`, scale1_5);
+                    zip.file(`drawable-xhdpi/${exportName}.${exportData.format}`, scale2);
+                    zip.file(`drawable-xxhdpi/${exportName}.${exportData.format}`, scale3);
+                    zip.file(`drawable-xxxhdpi/${exportName}.${exportData.format}`, scale4);
+
+                    break
+                  }
+                  case PluginMessageType.EXPORT_FLUTTER: {
+                    zip.file(`${exportData.name}.${exportData.format}`, scale1);
+                    zip.file(`1.5x/${exportData.name}.${exportData.format}`, scale1_5);
+                    zip.file(`2.0x/${exportData.name}.${exportData.format}`, scale2);
+                    zip.file(`3.0x/${exportData.name}.${exportData.format}`, scale3);
+                    zip.file(`4.0x/${exportData.name}.${exportData.format}`, scale4);
+                  }
                 }
-                case PluginMessageType.EXPORT_FLUTTER: {
-                  zip.file(`${exportData.name}.${exportData.format}`, toBase64(exportData.scale1), { base64: true })
-                  zip.file(`1.5x/${exportData.name}.${exportData.format}`, toBase64(exportData.scale1_5), { base64: true })
-                  zip.file(`2.0x/${exportData.name}.${exportData.format}`, toBase64(exportData.scale2), { base64: true })
-                  zip.file(`3.0x/${exportData.name}.${exportData.format}`, toBase64(exportData.scale3), { base64: true })
-                  zip.file(`4.0x/${exportData.name}.${exportData.format}`, toBase64(exportData.scale4), { base64: true })
-                }
-              }
-            })
+              })
+            );
 
             saveZip(zip, exports)
 
@@ -285,11 +316,23 @@ const App = () => {
             const zip = new JSZip()
             const exports: ExportScale3[] = data
 
-            exports.map((exportData) => {
-              zip.file(`${exportData.name}.${exportData.format}`, toBase64(exportData.scale1), { base64: true })
-              zip.file(`${exportData.name}@2x.${exportData.format}`, toBase64(exportData.scale2), { base64: true })
-              zip.file(`${exportData.name}@3x.${exportData.format}`, toBase64(exportData.scale3), { base64: true })
-            })
+            await Promise.all(
+              exports.map(async (exportData) => {
+                let scale1 = new Blob([exportData.scale1]);
+                let scale2 = new Blob([exportData.scale2]);
+                let scale3 = new Blob([exportData.scale3]);
+
+                if (exportData.format == "webp") {
+                  scale1 = await arrayBufferToWebP(exportData.scale1, { quality: 100 });
+                  scale2 = await arrayBufferToWebP(exportData.scale2, { quality: 100 });
+                  scale3 = await arrayBufferToWebP(exportData.scale3, { quality: 100 });
+                }
+
+                zip.file(`${exportData.name}.${exportData.format}`, scale1);
+                zip.file(`${exportData.name}@2x.${exportData.format}`, scale2);
+                zip.file(`${exportData.name}@3x.${exportData.format}`, scale3);
+              })
+            );
 
             saveZip(zip, exports)
             break
@@ -324,8 +367,8 @@ const App = () => {
                 {platformList.map((item) => <option value={item.value}>{item.name}</option>)}
               </select>
 
-              <input placeholder="prefix" value={prefix} onChange={prefixOnChange}  />
-              <input placeholder="suffix" value={suffix} onChange={suffixOnChange}  />
+              <input placeholder="prefix" value={prefix} onChange={prefixOnChange} />
+              <input placeholder="suffix" value={suffix} onChange={suffixOnChange} />
 
               <div className="spacer" />
 

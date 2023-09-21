@@ -6,9 +6,16 @@
     "figma",
     "dev"
   ],
-  "capabilities": ["inspect"],
+  "capabilities": [
+    "inspect"
+  ],
   "permissions": [],
   "enablePrivatePluginApi": true,
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  },
   "main": "dist/code.js",
   "ui": "dist/index.html"
 }

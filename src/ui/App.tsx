@@ -286,7 +286,7 @@ const App = () => {
 
                 switch (type) {
                   case PluginMessageType.EXPORT_ANDROID: {
-                    const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_");
+                    const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
 
                     zip.file(`drawable-mdpi/${exportName}.${exportData.format}`, scale1);
                     zip.file(`drawable-hdpi/${exportName}.${exportData.format}`, scale1_5);
@@ -318,6 +318,8 @@ const App = () => {
 
             await Promise.all(
               exports.map(async (exportData) => {
+                const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
+
                 let scale1 = new Blob([exportData.scale1]);
                 let scale2 = new Blob([exportData.scale2]);
                 let scale3 = new Blob([exportData.scale3]);
@@ -328,9 +330,9 @@ const App = () => {
                   scale3 = await arrayBufferToWebP(exportData.scale3, { quality: 100 });
                 }
 
-                zip.file(`${exportData.name}.${exportData.format}`, scale1);
-                zip.file(`${exportData.name}@2x.${exportData.format}`, scale2);
-                zip.file(`${exportData.name}@3x.${exportData.format}`, scale3);
+                zip.file(`${exportName}.${exportData.format}`, scale1);
+                zip.file(`${exportName}@2x.${exportData.format}`, scale2);
+                zip.file(`${exportName}@3x.${exportData.format}`, scale3);
               })
             );
 

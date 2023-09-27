@@ -232,7 +232,9 @@ const App = () => {
                     blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 });
                   }
 
-                  zip.file(`${exportData.name}.${exportData.format}`, blob)
+                  const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
+
+                  zip.file(`${exportName}.${exportData.format}`, blob)
                 })
               )
 
@@ -246,7 +248,9 @@ const App = () => {
                 blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 })
               }
 
-              saveAs(blob, `${exportData.name}.${exportData.format}`)
+              const exportName = exportData.name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
+
+              saveAs(blob, `${exportName}.${exportData.format}`)
 
               parent.postMessage({
                 pluginMessage: {

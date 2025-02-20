@@ -200,6 +200,16 @@ const App = () => {
     return name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
   }
 
+  const toArrayBuffer = (uint8Array: Uint8Array): ArrayBuffer => {
+    const buffer = uint8Array.buffer;
+
+    if (buffer instanceof ArrayBuffer) {
+      return buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+    }
+
+    throw new Error("Unsupported buffer type");
+  }
+
   useEffect(() => {
     window.onmessage = async (event) => {
       if (event.data.pluginMessage) {
@@ -233,7 +243,7 @@ const App = () => {
                   let blob = new Blob([exportData.buffer]);
 
                   if (exportData.format == "webp") {
-                    blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 });
+                    blob = await arrayBufferToWebP(toArrayBuffer(exportData.buffer), { quality: 100 });
                   }
 
                   const exportName = createExportName(exportData.name);
@@ -249,7 +259,7 @@ const App = () => {
               let blob = new Blob([exportData.buffer]);
 
               if (exportData.format == "webp") {
-                blob = await arrayBufferToWebP(exportData.buffer, { quality: 100 })
+                blob = await arrayBufferToWebP(toArrayBuffer(exportData.buffer), { quality: 100 })
               }
 
               const exportName = createExportName(exportData.name);
@@ -285,11 +295,11 @@ const App = () => {
                 let scale4 = new Blob([exportData.scale4]);
 
                 if (exportData.format == "webp") {
-                  scale1 = await arrayBufferToWebP(exportData.scale1, { quality: 100 });
-                  scale1_5 = await arrayBufferToWebP(exportData.scale1_5, { quality: 100 });
-                  scale2 = await arrayBufferToWebP(exportData.scale2, { quality: 100 });
-                  scale3 = await arrayBufferToWebP(exportData.scale3, { quality: 100 });
-                  scale4 = await arrayBufferToWebP(exportData.scale4, { quality: 100 });
+                  scale1 = await arrayBufferToWebP(toArrayBuffer(exportData.scale1), { quality: 100 });
+                  scale1_5 = await arrayBufferToWebP(toArrayBuffer(exportData.scale1_5), { quality: 100 });
+                  scale2 = await arrayBufferToWebP(toArrayBuffer(exportData.scale2), { quality: 100 });
+                  scale3 = await arrayBufferToWebP(toArrayBuffer(exportData.scale3), { quality: 100 });
+                  scale4 = await arrayBufferToWebP(toArrayBuffer(exportData.scale4), { quality: 100 });
                 }
 
                 const exportName = createExportName(exportData.name);
@@ -333,9 +343,9 @@ const App = () => {
                 let scale3 = new Blob([exportData.scale3]);
 
                 if (exportData.format == "webp") {
-                  scale1 = await arrayBufferToWebP(exportData.scale1, { quality: 100 });
-                  scale2 = await arrayBufferToWebP(exportData.scale2, { quality: 100 });
-                  scale3 = await arrayBufferToWebP(exportData.scale3, { quality: 100 });
+                  scale1 = await arrayBufferToWebP(toArrayBuffer(exportData.scale1), { quality: 100 });
+                  scale2 = await arrayBufferToWebP(toArrayBuffer(exportData.scale2), { quality: 100 });
+                  scale3 = await arrayBufferToWebP(toArrayBuffer(exportData.scale3), { quality: 100 });
                 }
 
                 zip.file(`${exportName}.${exportData.format}`, scale1);

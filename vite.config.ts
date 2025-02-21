@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import path from "path"
 import reactRefresh from "@vitejs/plugin-react";
 import { viteSingleFile } from "vite-plugin-singlefile";
 
@@ -16,6 +17,11 @@ export default defineConfig({
       output: {
         inlineDynamicImports: true,
       },
+    },
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src/ui"),
     },
   },
 });

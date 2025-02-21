@@ -1,4 +1,3 @@
-
 <div align="center">
   <a href="https://github.com/JerryKhw/figma-exporter">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
@@ -17,13 +16,12 @@
     ·
     <a href="https://github.com/JerryKhw/figma-exporter/issues">Request Feature</a>
     ·
-    <a href="https://www.buymeacoffee.com/jerrykim">Buy Me a Coffee</a>
+    <a href="https://www.buymeacoffee.com/jerrykhw">Buy Me a Coffee</a>
   </p>
 </div>
 
 <br/>
 
 [![Figma Exporter Screen Shot][screenshot]](https://www.figma.com/community/plugin/1183975085577339184)
-
 
 [screenshot]: images/screenshot.png

@@ -1,48 +1,71 @@
-html,
-body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  padding: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 10% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem
+  }
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%
+  }
+}
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-body,
-input,
-button {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  font-size: 1rem;
-  text-align: center;
-}
-
-body {
-  background: white;
-  color: black;
-}
-
-center {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  height: 100%;
-}
-
-section {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  padding: 5px;
-  padding-bottom: 60px;
-}
-
-.preview-wrap {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  margin: 5px;
-  width: 100px;
-  height: 120px;
+.bg-preview {
   background-image:
     linear-gradient(45deg, #ccc 25%, transparent 25%), 
     linear-gradient(135deg, #ccc 25%, transparent 25%),
@@ -50,96 +73,6 @@ section {
     linear-gradient(135deg, transparent 75%, #ccc 75%);
   background-size:12px 12px;
   background-position:0 0, 6px 0, 6px -6px, 0px 6px; 
-}
-
-.preview-wrap img {
-  box-sizing: border-box;
-  width: 100px;
-  height: 100px;
-  border: 1px solid grey;
-  object-fit: contain;
-}
-
-.preview-wrap input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  border: 1px solid grey;
-  border-top: 0px;
-  font-size: 11px;
-  height: 20px;
-}
-
-footer {
-  border-top: 1px solid grey;
-  box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  min-height: 55px;
-  padding: 7.5px;
-  background-color: white;
-}
-
-footer select {
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  appearance: none;
-
-  padding: 5px 14px 5px 10px;
-  margin: 0;
-  margin: 2.5px;
-  margin-right: 5px;
-
-  border: 1px solid #aaa;
-  border-radius: 5px;
-  box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.04);
-}
-
-footer input {
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  appearance: none;
-
-  padding: 5px 14px 5px 10px;
-  margin: 2.5px;
-  margin-right: 5px;
-
-  border: 1px solid #aaa;
-  border-radius: 5px;
-  box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.04);
-
-  width: 100px;
-  font-size: 14px;
-  text-align: left;
-}
-
-footer button {
-  border-radius: 5px;
-  box-shadow: 0 1px 0 1px rgba(0, 0, 0, 0.04);
-  border: 0px;
-  margin: 2.5px;
-  background-color: #0d99ff;
-  color: white;
-  font-size: 13px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-footer button:active {
-  background-color: #007be5;
-}
-
-.spacer {
-  flex: 1;
-}
-
-.column {
-  display: flex;
-  flex-direction: column;
 }
 
 .modal {
@@ -150,16 +83,4 @@ footer button:active {
   bottom: 0;
   left: 0;
   right: 0;
-}
-
-.delete {
-  position: absolute;
-  top: -3;
-  right: 2;
-}
-
-.delete:after {
-  display: inline-block;
-  content: "\00d7";
-  font-size: 20px;
 }

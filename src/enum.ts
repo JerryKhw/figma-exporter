@@ -1,6 +1,7 @@
 export enum PluginMessageType {
     PREVIEW = "PREVIEW",
     SETTING = "SETTING",
+    GLOBAL_SETTING = "GLOBAL_SETTING",
     EXPORT_WEB = "EXPORT_WEB",
     EXPORT_ANDROID = "EXPORT_ANDROID",
     EXPORT_iOS = "EXPORT_iOS",
@@ -12,8 +13,10 @@ export enum PluginMessageType {
 
 export enum UiMessageType {
     SETTING = "SETTING",
+    GLOBAL_SETTING = "GLOBAL_SETTING",
     EXPORT = "EXPORT",
     ERROR = "ERROR",
+    RESIZE = "RESIZE",
 }
 
 export enum Platform {
@@ -30,6 +33,12 @@ export enum Format {
     SVG = "svg",
     PDF = "pdf",
     WEBP = "webp",
+}
+
+export enum CharacterCase {
+    DEFAULT = "default",
+    LOWER_CASE = "lowerCase",
+    UPPER_CASE = "upperCase",
 }
 
 export enum PageType {

@@ -1,6 +1,6 @@
-import { Format, Platform, PluginMessageType, UiMessageType } from "../enum";
-import { UiMessage, Preview, ExportOption, ExportDefault, ExportScale3, ExportScale5 } from "../interface"
-import { DataKey, getData, setData } from "./data"
+import { CharacterCase, Format, Platform, PluginMessageType, UiMessageType } from "../enum";
+import { UiMessage, Preview, ExportOption, ExportDefault, ExportScale3, ExportScale5, Size, GlobalSetting, initSize, initGlobalSetting } from "../interface"
+import { deleteData, getData, GlobalDataKey, LocalDataKey, setData } from "./data"
 
 const SVGSetting: ExportSettings = {
   format: "SVG",
@@ -34,39 +34,58 @@ interface TmpExport {
   node: SceneNode
 }
 
+let globalSetting: GlobalSetting | undefined = undefined;
+
 const getPreview = async (node: SceneNode): Promise<Preview> => {
+  while (globalSetting == undefined) {
+    await sleep(0.1)
+  }
+
+  let name = node.name
+
+  switch (globalSetting.previewNameCharacterCase) {
+    case CharacterCase.LOWER_CASE:
+      name = name.toLowerCase();
+      break;
+    case CharacterCase.UPPER_CASE:
+      name = name.toUpperCase();
+      break;
+  }
+
+  globalSetting.previewNameReplaceDatas.forEach((data) => {
+    name = name.replace(new RegExp(data.original, "g"), data.replacement);
+  });
+
   return {
     id: node.id,
-    name: node.name.toLowerCase().replace(/ /gi, ""),
+    name: name,
     buffer: await node.exportAsync()
   }
 }
 
-if (figma.editorType !== "dev" && figma.currentPage.selection.length <= 0) {
-  figma.notify("Figma Exporter : Select Layer", {
-    error: true
-  })
-} else {
-  figma.showUI(__html__, { themeColors: true, height: 320, width: 560 });
+const isDev = figma.editorType === "dev"
 
-  getData(DataKey.SETTING).then((setting) => {
+if (isDev) {
+  figma.showUI(__html__, { themeColors: false });
+
+  getData(LocalDataKey.SETTING).then((setting) => {
     figma.ui.postMessage({
       type: PluginMessageType.SETTING,
       data: setting
     })
   })
 
-  Promise.all(figma.currentPage.selection.map((node) => getPreview(node))).then(
-    (preview) => {
-      figma.ui.postMessage({
-        type: PluginMessageType.PREVIEW,
-        data: preview,
-      })
+  getData(GlobalDataKey.SETTING).then((setting) => {
+    if (setting == undefined) {
+      setData(GlobalDataKey.SETTING, initGlobalSetting);
     }
-  )
-}
+    globalSetting = setting ?? initGlobalSetting;
+    figma.ui.postMessage({
+      type: PluginMessageType.GLOBAL_SETTING,
+      data: globalSetting,
+    })
+  })
 
-if (figma.editorType === "dev") {
   figma.on('selectionchange', () => {
     if (figma.currentPage.selection.length > 0) {
       Promise.all(figma.currentPage.selection.map((node) => getPreview(node))).then(
@@ -79,12 +98,60 @@ if (figma.editorType === "dev") {
       )
     }
   })
-}
+} else {
+  if (figma.currentPage.selection.length <= 0) {
+    figma.notify("Figma Exporter : Select Layer", {
+      error: true
+    })
+  } else {
+    figma.showUI(__html__, { themeColors: false, width: initSize.w, height: initSize.h });
 
+    getData(GlobalDataKey.SIZE).then((size: Size | undefined) => {
+      if (size != undefined) {
+        figma.ui.resize(size.w, size.h)
+      } else {
+        setData(GlobalDataKey.SIZE, initSize);
+      }
+    })
+
+    getData(LocalDataKey.SETTING).then((setting) => {
+      figma.ui.postMessage({
+        type: PluginMessageType.SETTING,
+        data: setting
+      })
+    })
+
+    getData(GlobalDataKey.SETTING).then((setting) => {
+      if (setting == undefined) {
+        setData(GlobalDataKey.SETTING, initGlobalSetting);
+      }
+      globalSetting = setting ?? initGlobalSetting;
+      figma.ui.postMessage({
+        type: PluginMessageType.GLOBAL_SETTING,
+        data: globalSetting,
+      })
+    })
+
+    Promise.all(figma.currentPage.selection.map((node) => getPreview(node))).then(
+      (preview) => {
+        figma.ui.postMessage({
+          type: PluginMessageType.PREVIEW,
+          data: preview,
+        })
+      }
+    )
+  }
+}
 
 figma.ui.onmessage = async (msg: UiMessage) => {
   const { type, data } = msg
   switch (type) {
+    case UiMessageType.RESIZE: {
+      const { w, h }: Size = data
+      setData(GlobalDataKey.SIZE, data)
+      figma.ui.resize(w, h);
+      break
+    }
     case UiMessageType.ERROR: {
       figma.notify("Figma Exporter : " + data, {
         error: true
@@ -92,13 +159,17 @@ figma.ui.onmessage = async (msg: UiMessage) => {
       break
     }
     case UiMessageType.SETTING: {
-      setData(DataKey.SETTING, data)
+      setData(LocalDataKey.SETTING, data)
 
       if (figma.editorType !== "dev") {
         figma.closePlugin("Figma Exporter : Success Export")
       } else {
         figma.notify("Figma Exporter : Success Export")
       }
+      break
+    }
+    case UiMessageType.GLOBAL_SETTING: {
+      setData(GlobalDataKey.SETTING, data)
       break
     }
     case UiMessageType.EXPORT: {

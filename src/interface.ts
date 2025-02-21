@@ -1,4 +1,4 @@
-import { PluginMessageType, UiMessageType } from './enum'
+import { CharacterCase, PluginMessageType, UiMessageType } from './enum'
 
 export interface PluginMessage {
     type: PluginMessageType,
@@ -27,6 +27,56 @@ export interface Setting {
     platform: string | null,
     prefix: string,
     suffix: string,
+}
+
+export interface ReplaceData {
+    id: number,
+    original: string,
+    replacement: string
+}
+
+export interface GlobalSetting {
+    previewNameCharacterCase: string,
+    previewNameReplaceDatas: ReplaceData[],
+    exportNameReplaceDatas: ReplaceData[],
+}
+
+export const initGlobalSetting: GlobalSetting = {
+    previewNameCharacterCase: CharacterCase.LOWER_CASE,
+    previewNameReplaceDatas: [
+        {
+            id: 1,
+            original: " ",
+            replacement: "",
+        }
+    ],
+    exportNameReplaceDatas: [
+        {
+            id: 1,
+            original: " ",
+            replacement: "",
+        },
+        {
+            id: 2,
+            original: "-",
+            replacement: "",
+        },
+        {
+            id: 3,
+            original: "=",
+            replacement: "",
+        },
+        {
+            id: 4,
+            original: ",",
+            replacement: "",
+        },
+        {
+            id: 5,
+            original: "/",
+            replacement: "",
+        },
+    ],
 }
 
 export interface ExportOption {
@@ -59,4 +109,14 @@ export interface ExportScale5 extends Export {
     scale2: Uint8Array,
     scale3: Uint8Array,
     scale4: Uint8Array,
+}
+
+export interface Size {
+    h: number,
+    w: number
+}
+
+export const initSize: Size = {
+    w: 560,
+    h: 320,
 }

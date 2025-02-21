@@ -1,12 +1,35 @@
-import React, { useEffect, useCallback, useState, useMemo } from "react";
-import { ExportScale3, ExportScale5, ExportDefault, Preview, PreviewUi, Setting } from "../interface"
-import { Format, PageType, Platform, PluginMessageType, UiMessageType } from "../enum"
+import "./App.css";
+import React, { useEffect, useCallback, useState, useMemo, useRef } from "react";
+import { ExportScale3, ExportScale5, ExportDefault, Preview, PreviewUi, Setting, ReplaceData, GlobalSetting, initGlobalSetting } from "../interface"
+import { CharacterCase, Format, PageType, Platform, PluginMessageType, UiMessageType } from "../enum"
 import { toBase64 } from "../base64"
-import { Loading, PreviewItem } from "./component";
 import JSZip from "jszip"
 import { saveAs } from "file-saver"
-import "./App.css";
 import { arrayBufferToWebP } from "webp-converter-browser";
+import { Loading, PreviewItem } from "@/components/custom";
+import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { ArrowRight, Plus, Trash2 } from "lucide-react";
 
 const formatList = [
   {
@@ -72,12 +95,12 @@ const App = () => {
     return preview.map((pre) => pre.name)
   }, [preview])
 
-  const formatOnChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormat(event.target.value)
+  const formatOnChange = useCallback((value: string) => {
+    setFormat(value)
   }, [])
 
-  const platformOnChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    setPlatform(event.target.value)
+  const platformOnChange = useCallback((value: string) => {
+    setPlatform(value)
   }, [])
 
   const prefixOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,6 +110,74 @@ const App = () => {
   const suffixOnChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSuffix(event.target.value)
   }, [])
+
+  const [globalSetting, setGlobalSetting] = useState<GlobalSetting | undefined>(undefined)
+
+  const [previewNameCharacterCase, setPreviewNameCharacterCase] = useState<string>(CharacterCase.LOWER_CASE)
+
+  const previewNameCharacterCaseOnChange = useCallback((value: string) => {
+    setPreviewNameCharacterCase(value)
+  }, [])
+
+  const [previewNameReplaceDatas, setPreviewNameReplaceDatas] = useState<ReplaceData[]>([])
+  const [exportNameReplaceDatas, setExportNameReplaceDatas] = useState<ReplaceData[]>([])
+
+  const handlePreviewInputChange = useCallback((id: number, field: keyof ReplaceData, value: string) => {
+    setPreviewNameReplaceDatas((prevPairs) => prevPairs.map((pair) => (pair.id === id ? { ...pair, [field]: value } : pair)))
+  }, []);
+
+  const addPreviewNewRow = useCallback(() => {
+    const newId = previewNameReplaceDatas.length > 0 ? Math.max(...previewNameReplaceDatas.map((p) => p.id)) + 1 : 1
+    setPreviewNameReplaceDatas((prevPairs) => [...prevPairs, { id: newId, original: "", replacement: "" }])
+  }, [previewNameReplaceDatas]);
+
+  const deletePreviewRow = useCallback((id: number) => {
+    setPreviewNameReplaceDatas((prevPairs) => prevPairs.filter((pair) => pair.id !== id))
+  }, []);
+
+  const handleExportInputChange = useCallback((id: number, field: keyof ReplaceData, value: string) => {
+    setExportNameReplaceDatas((prevPairs) => prevPairs.map((pair) => (pair.id === id ? { ...pair, [field]: value } : pair)))
+  }, []);
+
+  const addExportNewRow = useCallback(() => {
+    const newId = exportNameReplaceDatas.length > 0 ? Math.max(...exportNameReplaceDatas.map((p) => p.id)) + 1 : 1
+    setExportNameReplaceDatas((prevPairs) => [...prevPairs, { id: newId, original: "", replacement: "" }])
+  }, [exportNameReplaceDatas]);
+
+  const deleteExportRow = useCallback((id: number) => {
+    setExportNameReplaceDatas((prevPairs) => prevPairs.filter((pair) => pair.id !== id))
+  }, []);
+
+  const [open, setOpen] = useState(false)
+
+  const globalSettingDialogOnChange = useCallback((open: boolean) => {
+    setOpen(open)
+    if (!open) {
+      const setting = globalSetting ?? initGlobalSetting;
+
+      setPreviewNameCharacterCase(setting.previewNameCharacterCase)
+      setPreviewNameReplaceDatas(setting.previewNameReplaceDatas)
+      setExportNameReplaceDatas(setting.exportNameReplaceDatas)
+    }
+  }, [globalSetting]);
+
+  const onSave = useCallback(() => {
+    const setting = {
+      previewNameCharacterCase: previewNameCharacterCase,
+      previewNameReplaceDatas: previewNameReplaceDatas,
+      exportNameReplaceDatas: exportNameReplaceDatas,
+    }
+
+    parent.postMessage({
+      pluginMessage: {
+        type: UiMessageType.GLOBAL_SETTING,
+        data: setting,
+      }
+    }, "*");
+
+    setGlobalSetting(setting)
+    setOpen(false)
+  }, [previewNameCharacterCase, previewNameReplaceDatas, exportNameReplaceDatas]);
 
   const onExport = useCallback(() => {
     if (preview.length == 0) {
@@ -143,7 +234,7 @@ const App = () => {
       if (pre.id == id) {
         return {
           ...pre,
-          name: event.target.value.replace(/ /gi, ""),
+          name: event.target.value,
         }
       }
       return {
@@ -196,9 +287,25 @@ const App = () => {
     }
   }, [setting])
 
-  const createExportName = (name: string): string => {
-    return name.replace(/ /gi, "_").replace(/-/gi, "_").replace(/=/gi, "_").replace(/,/gi, "_").replace(/\//gi, "_");
-  }
+  useEffect(() => {
+    if (globalSetting != undefined) {
+      setPreviewNameCharacterCase(globalSetting.previewNameCharacterCase)
+      setPreviewNameReplaceDatas(globalSetting.previewNameReplaceDatas)
+      setExportNameReplaceDatas(globalSetting.exportNameReplaceDatas)
+    }
+  }, [globalSetting])
+
+  const createExportName = useCallback((name: string): string => {
+    const setting = globalSetting ?? initGlobalSetting;
+
+    let tmp = name
+
+    setting.exportNameReplaceDatas.forEach((data) => {
+      tmp = tmp.replace(new RegExp(data.original, "g"), data.replacement);
+    });
+
+    return tmp
+  }, [globalSetting]);
 
   const toArrayBuffer = (uint8Array: Uint8Array): ArrayBuffer => {
     const buffer = uint8Array.buffer;
@@ -210,6 +317,38 @@ const App = () => {
     throw new Error("Unsupported buffer type");
   }
 
+  const cornerRef = useRef<SVGSVGElement | null>(null);
+
+  const resizeWindow = useCallback((event: PointerEvent) => {
+    const size = {
+      w: Math.max(560, Math.floor(event.clientX + 5)),
+      h: Math.max(320, Math.floor(event.clientY + 5))
+    };
+
+    parent.postMessage({
+      pluginMessage: {
+        type: UiMessageType.RESIZE,
+        data: size,
+      }
+    }, "*");
+  }, []);
+
+  const handlePointerDown = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    const corner = cornerRef.current;
+    if (corner) {
+      corner.onpointermove = resizeWindow;
+      corner.setPointerCapture(event.pointerId);
+    }
+  }, [cornerRef]);
+
+  const handlePointerUp = useCallback((event: React.PointerEvent<SVGSVGElement>) => {
+    const corner = cornerRef.current;
+    if (corner) {
+      corner.onpointermove = null;
+      corner.releasePointerCapture(event.pointerId);
+    }
+  }, [cornerRef]);
+
   useEffect(() => {
     window.onmessage = async (event) => {
       if (event.data.pluginMessage) {
@@ -219,6 +358,10 @@ const App = () => {
           case PluginMessageType.SETTING: {
             setSetting(data)
             setPageType(PageType.EXPORT)
+            break
+          }
+          case PluginMessageType.GLOBAL_SETTING: {
+            setGlobalSetting(data)
             break
           }
           case PluginMessageType.PREVIEW: {
@@ -240,13 +383,15 @@ const App = () => {
             if (exports.length > 1) {
               await Promise.all(
                 exports.map(async (exportData) => {
-                  let blob = new Blob([exportData.buffer]);
+                  const exportName = createExportName(exportData.name);
+
+                  let blob;
 
                   if (exportData.format == "webp") {
                     blob = await arrayBufferToWebP(toArrayBuffer(exportData.buffer), { quality: 100 });
+                  } else {
+                    blob = new Blob([exportData.buffer]);
                   }
-
-                  const exportName = createExportName(exportData.name);
 
                   zip.file(`${exportName}.${exportData.format}`, blob)
                 })
@@ -255,14 +400,15 @@ const App = () => {
               saveZip(zip, exports)
             } else if (exports.length == 1) {
               const exportData = exports[0]
+              const exportName = createExportName(exportData.name);
 
-              let blob = new Blob([exportData.buffer]);
+              let blob;
 
               if (exportData.format == "webp") {
                 blob = await arrayBufferToWebP(toArrayBuffer(exportData.buffer), { quality: 100 })
+              } else {
+                blob = new Blob([exportData.buffer]);
               }
-
-              const exportName = createExportName(exportData.name);
 
               saveAs(blob, `${exportName}.${exportData.format}`)
 
@@ -288,11 +434,9 @@ const App = () => {
 
             await Promise.all(
               exports.map(async (exportData) => {
-                let scale1 = new Blob([exportData.scale1]);
-                let scale1_5 = new Blob([exportData.scale1_5]);
-                let scale2 = new Blob([exportData.scale2]);
-                let scale3 = new Blob([exportData.scale3]);
-                let scale4 = new Blob([exportData.scale4]);
+                const exportName = createExportName(exportData.name);
+
+                let scale1, scale1_5, scale2, scale3, scale4;
 
                 if (exportData.format == "webp") {
                   scale1 = await arrayBufferToWebP(toArrayBuffer(exportData.scale1), { quality: 100 });
@@ -300,9 +444,13 @@ const App = () => {
                   scale2 = await arrayBufferToWebP(toArrayBuffer(exportData.scale2), { quality: 100 });
                   scale3 = await arrayBufferToWebP(toArrayBuffer(exportData.scale3), { quality: 100 });
                   scale4 = await arrayBufferToWebP(toArrayBuffer(exportData.scale4), { quality: 100 });
+                } else {
+                  scale1 = new Blob([exportData.scale1]);
+                  scale1_5 = new Blob([exportData.scale1_5]);
+                  scale2 = new Blob([exportData.scale2]);
+                  scale3 = new Blob([exportData.scale3]);
+                  scale4 = new Blob([exportData.scale4]);
                 }
-
-                const exportName = createExportName(exportData.name);
 
                 switch (type) {
                   case PluginMessageType.EXPORT_ANDROID: {
@@ -338,14 +486,16 @@ const App = () => {
               exports.map(async (exportData) => {
                 const exportName = createExportName(exportData.name);
 
-                let scale1 = new Blob([exportData.scale1]);
-                let scale2 = new Blob([exportData.scale2]);
-                let scale3 = new Blob([exportData.scale3]);
+                let scale1, scale2, scale3;
 
                 if (exportData.format == "webp") {
                   scale1 = await arrayBufferToWebP(toArrayBuffer(exportData.scale1), { quality: 100 });
                   scale2 = await arrayBufferToWebP(toArrayBuffer(exportData.scale2), { quality: 100 });
                   scale3 = await arrayBufferToWebP(toArrayBuffer(exportData.scale3), { quality: 100 });
+                } else {
+                  scale1 = new Blob([exportData.scale1]);
+                  scale2 = new Blob([exportData.scale2]);
+                  scale3 = new Blob([exportData.scale3]);
                 }
 
                 zip.file(`${exportName}.${exportData.format}`, scale1);
@@ -362,49 +512,174 @@ const App = () => {
     };
   }, [saveZip]);
 
+
   return (
     <>
       {pageType == PageType.LOADING ?
         (
-          <center>
+          <div className="size-full flex">
             <Loading />
-          </center>
+          </div>
         )
         : (
-          <>
-            <section>
+          <div className="size-full flex flex-col select-none">
+            <div className="flex-1 grid grid-cols-5 gap-2 p-2 overflow-auto">
               {preview.map((pre) => <PreviewItem preview={pre} onChange={previewOnChange} onDelete={previewOnDelete} />)}
-            </section>
-            <footer>
+            </div>
 
-              <select value={format} onChange={formatOnChange}>
-                <option value="" disabled={true}>Format</option>
-                {formatList.map((item) => <option value={item.value}>{item.name}</option>)}
-              </select>
+            <div className="flex border-t gap-2">
+              <div className="flex flex-1 gap-2 p-2 overflow-x-scroll">
+                <Select onValueChange={formatOnChange} defaultValue={format}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Format" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Format</SelectLabel>
+                      {formatList.map((item) => <SelectItem value={item.value}>{item.name}</SelectItem>)}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
-              <select value={platform} onChange={platformOnChange} disabled={formatDisabled}>
-                <option value="" disabled={true}>Platform</option>
-                {platformList.map((item) => <option value={item.value}>{item.name}</option>)}
-              </select>
+                <Select onValueChange={platformOnChange} defaultValue={platform} disabled={formatDisabled}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Platform" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>Platform</SelectLabel>
+                      {platformList.map((item) => <SelectItem value={item.value}>{item.name}</SelectItem>)}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
 
-              <input placeholder="prefix" value={prefix} onChange={prefixOnChange} />
-              <input placeholder="suffix" value={suffix} onChange={suffixOnChange} />
+                <Input className="w-[100px]" placeholder="Prefix" value={prefix} onChange={prefixOnChange} />
 
-              <div className="spacer" />
+                <Input className="w-[100px]" placeholder="Suffix" value={suffix} onChange={suffixOnChange} />
+              </div>
 
-              <button onClick={onExport}>Export</button>
-            </footer>
-
+              <div className="flex gap-2 py-2 pr-2">
+                <Dialog open={open} onOpenChange={globalSettingDialogOnChange}>
+                  <DialogTrigger>
+                    <Button onClick={() => setOpen(true)}>
+                      <svg fill="#ffffff" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 50 50">
+                        <path d="M47.16,21.221l-5.91-0.966c-0.346-1.186-0.819-2.326-1.411-3.405l3.45-4.917c0.279-0.397,0.231-0.938-0.112-1.282 l-3.889-3.887c-0.347-0.346-0.893-0.391-1.291-0.104l-4.843,3.481c-1.089-0.602-2.239-1.08-3.432-1.427l-1.031-5.886 C28.607,2.35,28.192,2,27.706,2h-5.5c-0.49,0-0.908,0.355-0.987,0.839l-0.956,5.854c-1.2,0.345-2.352,0.818-3.437,1.412l-4.83-3.45 c-0.399-0.285-0.942-0.239-1.289,0.106L6.82,10.648c-0.343,0.343-0.391,0.883-0.112,1.28l3.399,4.863 c-0.605,1.095-1.087,2.254-1.438,3.46l-5.831,0.971c-0.482,0.08-0.836,0.498-0.836,0.986v5.5c0,0.485,0.348,0.9,0.825,0.985 l5.831,1.034c0.349,1.203,0.831,2.362,1.438,3.46l-3.441,4.813c-0.284,0.397-0.239,0.942,0.106,1.289l3.888,3.891 c0.343,0.343,0.884,0.391,1.281,0.112l4.87-3.411c1.093,0.601,2.248,1.078,3.445,1.424l0.976,5.861C21.3,47.647,21.717,48,22.206,48 h5.5c0.485,0,0.9-0.348,0.984-0.825l1.045-5.89c1.199-0.353,2.348-0.833,3.43-1.435l4.905,3.441 c0.398,0.281,0.938,0.232,1.282-0.111l3.888-3.891c0.346-0.347,0.391-0.894,0.104-1.292l-3.498-4.857 c0.593-1.08,1.064-2.222,1.407-3.408l5.918-1.039c0.479-0.084,0.827-0.5,0.827-0.985v-5.5C47.999,21.718,47.644,21.3,47.16,21.221z M25,32c-3.866,0-7-3.134-7-7c0-3.866,3.134-7,7-7s7,3.134,7,7C32,28.866,28.866,32,25,32z"></path>
+                      </svg>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] max-h-[80vh] overflow-y-scroll">
+                    <DialogHeader>
+                      <DialogTitle>Global Setting</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4">
+                      <div className="grid gap-2">
+                        <Label className="flex items-center h-8">
+                          PreviewName Character Case
+                        </Label>
+                        <RadioGroup defaultValue={previewNameCharacterCase} onValueChange={previewNameCharacterCaseOnChange} className="flex">
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="default" id="default" />
+                            <Label htmlFor="default">Default</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="lowerCase" id="lowerCase" />
+                            <Label htmlFor="lowerCase">LowerCase</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="upperCase" id="upperCase" />
+                            <Label htmlFor="upperCase">UpperCase</Label>
+                          </div>
+                        </RadioGroup>
+                        <div className="flex items-center justify-between">
+                          <Label>PreviewName Replace Inputs</Label>
+                          <Button onClick={addPreviewNewRow} size="sm" variant="outline">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Row
+                          </Button>
+                        </div>
+                        {previewNameReplaceDatas.map((pair) => (
+                          <div key={pair.id} className="flex items-center space-x-2">
+                            <Input
+                              value={pair.original}
+                              onChange={(e) => handlePreviewInputChange(pair.id, "original", e.target.value)}
+                              placeholder="Original text"
+                              className="w-full"
+                            />
+                            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <Input
+                              value={pair.replacement}
+                              onChange={(e) => handlePreviewInputChange(pair.id, "replacement", e.target.value)}
+                              placeholder="Replacement text"
+                              className="w-full"
+                            />
+                            <Button onClick={() => deletePreviewRow(pair.id)} size="icon" variant="ghost" className="flex-shrink-0">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete row</span>
+                            </Button>
+                          </div>
+                        ))}
+                        <div className="flex items-center justify-between">
+                          <Label>ExportName Replace Inputs</Label>
+                          <Button onClick={addExportNewRow} size="sm" variant="outline">
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Row
+                          </Button>
+                        </div>
+                        {exportNameReplaceDatas.map((pair) => (
+                          <div key={pair.id} className="flex items-center space-x-2">
+                            <Input
+                              value={pair.original}
+                              onChange={(e) => handleExportInputChange(pair.id, "original", e.target.value)}
+                              placeholder="Original text"
+                              className="w-full"
+                            />
+                            <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <Input
+                              value={pair.replacement}
+                              onChange={(e) => handleExportInputChange(pair.id, "replacement", e.target.value)}
+                              placeholder="Replacement text"
+                              className="w-full"
+                            />
+                            <Button onClick={() => deleteExportRow(pair.id)} size="icon" variant="ghost" className="flex-shrink-0">
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Delete row</span>
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button onClick={onSave}>Save</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+                <Button onClick={onExport}>Export</Button>
+              </div>
+            </div>
             {
               loading && (
                 <div className="modal">
-                  <center>
+                  <div className="size-full flex">
                     <Loading color="#ffffff" />
-                  </center>
+                  </div>
                 </div>
               )
             }
-          </>
+            <svg
+              ref={cornerRef}
+              onPointerDown={handlePointerDown}
+              onPointerUp={handlePointerUp}
+              style={{
+                position: "absolute",
+                right: 0,
+                bottom: 0,
+                cursor: "nwse-resize",
+              }} width={16} height={16} viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 0V16H0L16 0Z" fill="white" />
+              <path d="M6.22577 16H3L16 3V6.22576L6.22577 16Z" fill="#000000" />
+              <path d="M11.8602 16H8.63441L16 8.63441V11.8602L11.8602 16Z" fill="#000000" />
+            </svg>
+          </div>
         )}
     </>
   );

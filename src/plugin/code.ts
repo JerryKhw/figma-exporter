@@ -79,7 +79,7 @@ if (isDev) {
     if (setting == undefined) {
       setData(GlobalDataKey.SETTING, initGlobalSetting);
     }
-    globalSetting = setting ?? initGlobalSetting;
+    globalSetting = setting == undefined ? initGlobalSetting : setting;
     figma.ui.postMessage({
       type: PluginMessageType.GLOBAL_SETTING,
       data: globalSetting,
@@ -125,7 +125,7 @@ if (isDev) {
       if (setting == undefined) {
         setData(GlobalDataKey.SETTING, initGlobalSetting);
       }
-      globalSetting = setting ?? initGlobalSetting;
+      globalSetting = setting == undefined ? initGlobalSetting : setting;
       figma.ui.postMessage({
         type: PluginMessageType.GLOBAL_SETTING,
         data: globalSetting,

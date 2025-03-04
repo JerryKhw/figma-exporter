@@ -153,7 +153,7 @@ const App = () => {
   const globalSettingDialogOnChange = useCallback((open: boolean) => {
     setOpen(open)
     if (!open) {
-      const setting = globalSetting ?? initGlobalSetting;
+      const setting = globalSetting == undefined ? initGlobalSetting : globalSetting;
 
       setPreviewNameCharacterCase(setting.previewNameCharacterCase)
       setPreviewNameReplaceDatas(setting.previewNameReplaceDatas)
@@ -296,7 +296,7 @@ const App = () => {
   }, [globalSetting])
 
   const createExportName = useCallback((name: string): string => {
-    const setting = globalSetting ?? initGlobalSetting;
+    const setting = globalSetting == undefined ? initGlobalSetting : globalSetting;
 
     let tmp = name
 

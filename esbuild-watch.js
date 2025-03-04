@@ -1,19 +1,15 @@
 #!/usr/bin/env node
-require("esbuild")
-    .build({
+const esbuild = require("esbuild");
+
+async function startBuild() {
+    const ctx = await esbuild.context({
         entryPoints: ["src/plugin/code.ts", "src/plugin/data.ts"],
         outdir: "dist",
         bundle: true,
-        watch: {
-            onRebuild(error, result) {
-                if (error) console.error('watch build failed:', error)
-                else {
-                    console.log('watch build succeeded:', result)
-                    // HERE: somehow restart the server from here, e.g., by sending a signal that you trap and react to inside the server.
-                }
-            },
-        },
-    }).then(() => {
-        console.log('watching...')
-    })
-    .catch(() => process.exit(1));
+    });
+
+    await ctx.watch();
+    console.log("watching...");
+}
+
+startBuild().catch(() => process.exit(1));

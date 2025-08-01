@@ -99,7 +99,7 @@ export const ExportPage = () => {
 
     return (
         <>
-            <div className="size-full bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col relative">
+            <div className="size-full bg-white flex flex-col relative">
                 <div className="flex-1 p-3 overflow-auto">
                     {viewMode === ViewMode.GRID ? (
                         <div

@@ -108,7 +108,7 @@ export const SettingsPage = () => {
 
     return (
         <>
-            <div className="size-full bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col relative">
+            <div className="size-full bg-white flex flex-col relative">
                 <div className="p-4 pb-2">
                     <h1 className="text-lg font-semibold text-gray-900 text-center">
                         Settings
@@ -261,11 +261,14 @@ export const SettingsPage = () => {
                                     Force compression at 100% quality
                                 </span>
                                 <ToggleSwitch
-                                    checked={tmpSetting.forceCompressionAt100Quality}
+                                    checked={
+                                        tmpSetting.forceCompressionAt100Quality
+                                    }
                                     onChange={(checked) =>
                                         setTmpSetting((prev) => ({
                                             ...prev,
-                                            forceCompressionAt100Quality: checked,
+                                            forceCompressionAt100Quality:
+                                                checked,
                                         }))
                                     }
                                 />

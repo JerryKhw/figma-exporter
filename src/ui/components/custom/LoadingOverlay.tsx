@@ -5,7 +5,7 @@ export const LoadingOverlay = ({ isLoading }: { isLoading: boolean }) => {
 
     return (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-            <div className="w-8 h-8 border-2 border-gray-200 border-t-gray-600 rounded-full animate-spin"></div>
+            <div className="size-8 border-2 border-gray-400 dark:border-gray-500 border-t-gray-800 dark:border-t-white rounded-full animate-spin"></div>
         </div>
     );
 };

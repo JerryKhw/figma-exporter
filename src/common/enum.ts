@@ -55,3 +55,9 @@ export enum SettingScope {
     PROJECT = "project",
     GLOBAL = "global",
 }
+
+export enum Theme {
+    LIGHT = "light",
+    DARK = "dark",
+    SYSTEM = "system",
+}

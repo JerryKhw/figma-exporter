@@ -17,7 +17,7 @@ const Uint8ArrayStruct = define<Uint8Array>("Uint8Array", (value) => {
 });
 
 import type { PluginMessageType, UiMessageType } from "./enum.js";
-import { NameCase, Format, Platform, ViewMode, SettingScope } from "./enum.js";
+import { NameCase, Format, Platform, ViewMode, SettingScope, Theme } from "./enum.js";
 
 export interface PluginMessage {
     type: PluginMessageType;
@@ -81,6 +81,7 @@ export const CleanupRuleSchema = object({
 export type CleanupRule = Infer<typeof CleanupRuleSchema>;
 
 export const SettingSchema = object({
+    theme: enums(Object.values(Theme)),
     viewMode: enums(Object.values(ViewMode)),
     perRow: number(),
     autoCloseAfterExport: boolean(),
@@ -94,6 +95,7 @@ export const SettingSchema = object({
 export type Setting = Infer<typeof SettingSchema>;
 
 export const initSetting: Setting = {
+    theme: Theme.SYSTEM,
     viewMode: ViewMode.GRID,
     perRow: 5,
     autoCloseAfterExport: true,

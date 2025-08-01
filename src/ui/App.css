@@ -130,30 +130,31 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --background: 0 0% 17.3%;
+    --foreground: 210 40% 98%;
+    --card: 0 0% 17.3%;
+    --card-foreground: 210 40% 98%;
+    --popover: 0 0% 17.3%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+    --radius: 0.5rem;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -172,4 +173,85 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.dark {
+  background-color: #2c2c2c;
+}
+
+.dark .bg-white {
+  background-color: #3a3a3a;
+}
+
+.dark .bg-gray-300 {
+  background-color: #5a5a5a;
+}
+
+.dark .bg-gray-700 {
+  background-color: #404040;
+}
+
+.dark .bg-gray-800 {
+  background-color: #2a2a2a;
+}
+
+.dark .border-gray-200 {
+  border-color: #4a4a4a;
+}
+
+.dark .border-gray-600 {
+  border-color: #4a4a4a;
+}
+
+.dark .border-gray-100 {
+  border-color: #4a4a4a;
+}
+
+.dark .text-gray-400 {
+  color: #b0b0b0;
+}
+
+.dark .text-gray-500 {
+  color: #9a9a9a;
+}
+
+.dark .text-gray-600 {
+  color: #808080;
+}
+
+.dark .text-gray-700 {
+  color: #d1d1d1;
+}
+
+.dark .hover\:bg-gray-50:hover {
+  background-color: #404040;
+}
+
+.dark .hover\:bg-gray-800:hover {
+  background-color: #e5e5e5;
+}
+
+.dark .hover\:text-red-500:hover {
+  color: var(--color-red-400);
+}
+
+.dark .bg-black {
+  background-color: #f5f5f5;
+}
+
+.dark .bg-black .text-white,
+.dark .hover\:bg-gray-800 .text-white {
+  color: #2c2c2c;
+}
+
+.dark .text-white {
+  color: #2c2c2c;
+}
+
+.dark .border-gray-200 {
+  border-color: #4a4a4a;
+}
+
+.dark input::placeholder {
+  color: var(--color-gray-400);
 }

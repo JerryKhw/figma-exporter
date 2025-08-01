@@ -7,6 +7,7 @@ import {
     PluginMessageType,
     UiMessageType,
     SettingScope,
+    Theme,
 } from "@common/enum.js";
 import type {
     UiMessage,
@@ -143,7 +144,7 @@ const getPreview = async (
 };
 
 if (figma.editorType === "dev") {
-    figma.showUI(__html__, { themeColors: false });
+    figma.showUI(__html__, { themeColors: true });
 } else {
     getData(GlobalKey.SIZE).then((data) => {
         const [_, result] = validate(data, SizeSchema);
@@ -154,7 +155,7 @@ if (figma.editorType === "dev") {
         }
 
         figma.showUI(__html__, {
-            themeColors: false,
+            themeColors: true,
             width: finalResult.w,
             height: finalResult.h,
         });
@@ -206,6 +207,13 @@ Promise.all([
     getData(ProjectKey.SETTING),
     getData(GlobalKey.SETTING),
 ]).then(async ([data1, data2, data3]) => {
+    if (data2 && typeof data2 === "object" && !("theme" in data2)) {
+        data2 = { ...data2, theme: Theme.SYSTEM };
+    }
+    if (data3 && typeof data3 === "object" && !("theme" in data3)) {
+        data3 = { ...data3, theme: Theme.SYSTEM };
+    }
+
     const [_e1, result1] = validate(data1, ProjectDataSchema);
     const [_e2, result2] = validate(data2, SettingSchema);
     const [_e3, result3] = validate(data3, SettingSchema);

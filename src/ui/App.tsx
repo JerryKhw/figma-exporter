@@ -11,7 +11,18 @@ import { ExportPage, LoadingPage, SettingsPage } from "./page/index";
 import { useAppStore } from "./app-store";
 
 const App = () => {
-    const { page, setInit, setPreviews, saveExport } = useAppStore();
+    const { page, setInit, setPreviews, saveExport, initializeTheme } =
+        useAppStore();
+
+    useLayoutEffect(() => {
+        const media = window.matchMedia("(prefers-color-scheme: dark)");
+        const handler = () => {
+            initializeTheme();
+        };
+
+        media.addEventListener("change", handler);
+        return () => media.removeEventListener("change", handler);
+    }, [initializeTheme]);
 
     useLayoutEffect(() => {
         window.onmessage = async (event) => {

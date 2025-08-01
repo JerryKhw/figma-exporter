@@ -1,9 +1,18 @@
 import React, { useState, useCallback, useEffect } from "react";
 
-import { Globe, FolderOpen, Plus, Coffee, Trash2 } from "lucide-react";
+import {
+    Globe,
+    FolderOpen,
+    Plus,
+    Coffee,
+    Trash2,
+    Sun,
+    Moon,
+    Monitor,
+} from "lucide-react";
 
 import { useAppStore } from "@ui/app-store";
-import { SettingScope, ViewMode, NameCase } from "@common/enum";
+import { SettingScope, ViewMode, NameCase, Theme } from "@common/enum";
 import { Button } from "@ui/components/ui/button";
 import { Input } from "@ui/components/ui/input";
 import { ToggleSwitch } from "@ui/components/custom/ToggleSwitch";
@@ -23,6 +32,7 @@ export const SettingsPage = () => {
         globalSetting,
         projectSetting,
         onSaveSetting,
+        applyTheme,
     } = useAppStore();
 
     const { settingScope } = projectData;
@@ -103,21 +113,22 @@ export const SettingsPage = () => {
     }, []);
 
     const onSave = useCallback(() => {
+        applyTheme(tmpSetting.theme);
         onSaveSetting(tmpSettingScope, tmpSetting);
-    }, [tmpSetting]);
+    }, [tmpSetting, applyTheme]);
 
     return (
         <>
-            <div className="size-full bg-white border border-gray-200 rounded-lg shadow-lg flex flex-col relative">
+            <div className="size-full bg-white dark:bg-[#3A3A3A] flex flex-col relative transition-colors duration-200">
                 <div className="p-4 pb-2">
-                    <h1 className="text-lg font-semibold text-gray-900 text-center">
+                    <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center">
                         Settings
                     </h1>
                 </div>
 
                 <div className="flex-1 overflow-y-auto px-4 pb-2">
-                    <div className="mb-3 p-2 bg-gray-50 rounded-md border border-gray-100">
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-700/50 transition-colors duration-200">
+                        <div className="flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300 font-medium">
                             {tmpSettingScope === SettingScope.GLOBAL ? (
                                 <>
                                     <Globe className="size-3" />
@@ -138,8 +149,80 @@ export const SettingsPage = () => {
                         </div>
                     </div>
 
+                    {/* Theme Settings */}
                     <div className="mb-4">
-                        <h2 className="text-sm font-medium text-gray-700 mb-2">
+                        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Appearance
+                        </h2>
+                        <div className="flex gap-4 text-xs">
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="theme"
+                                    value={Theme.LIGHT}
+                                    checked={tmpSetting.theme === Theme.LIGHT}
+                                    onChange={(e) => {
+                                        const newTheme = e.target
+                                            .value as Theme;
+                                        setTmpSetting((prev) => ({
+                                            ...prev,
+                                            theme: newTheme,
+                                        }));
+                                    }}
+                                    className="mr-2 w-3 h-3"
+                                />
+                                <Sun className="w-3 h-3 mr-1" />
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    Light
+                                </span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="theme"
+                                    value={Theme.DARK}
+                                    checked={tmpSetting.theme === Theme.DARK}
+                                    onChange={(e) => {
+                                        const newTheme = e.target
+                                            .value as Theme;
+                                        setTmpSetting((prev) => ({
+                                            ...prev,
+                                            theme: newTheme,
+                                        }));
+                                    }}
+                                    className="mr-2 w-3 h-3"
+                                />
+                                <Moon className="w-3 h-3 mr-1" />
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    Dark
+                                </span>
+                            </label>
+                            <label className="flex items-center">
+                                <input
+                                    type="radio"
+                                    name="theme"
+                                    value={Theme.SYSTEM}
+                                    checked={tmpSetting.theme === Theme.SYSTEM}
+                                    onChange={(e) => {
+                                        const newTheme = e.target
+                                            .value as Theme;
+                                        setTmpSetting((prev) => ({
+                                            ...prev,
+                                            theme: newTheme,
+                                        }));
+                                    }}
+                                    className="mr-2 w-3 h-3"
+                                />
+                                <Monitor className="w-3 h-3 mr-1" />
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    System
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Layout Settings
                         </h2>
                         <div className="space-y-2">
@@ -162,7 +245,7 @@ export const SettingsPage = () => {
                                         }
                                         className="mr-2 w-3 h-3"
                                     />
-                                    <span className="text-gray-700">
+                                    <span className="text-gray-700 dark:text-gray-300">
                                         Grid View
                                     </span>
                                 </label>
@@ -184,7 +267,7 @@ export const SettingsPage = () => {
                                         }
                                         className="mr-2 w-3 h-3"
                                     />
-                                    <span className="text-gray-700">
+                                    <span className="text-gray-700 dark:text-gray-300">
                                         List View
                                     </span>
                                 </label>
@@ -192,7 +275,7 @@ export const SettingsPage = () => {
 
                             {tmpSetting.viewMode === ViewMode.GRID && (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-700">
+                                    <span className="text-xs text-gray-700 dark:text-gray-300">
                                         Items per row:
                                     </span>
                                     <Select
@@ -204,7 +287,7 @@ export const SettingsPage = () => {
                                             }))
                                         }
                                     >
-                                        <SelectTrigger className="w-16 h-6 text-xs">
+                                        <SelectTrigger className="w-16 h-6 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -221,12 +304,12 @@ export const SettingsPage = () => {
                     </div>
 
                     <div className="mb-4">
-                        <h2 className="text-sm font-medium text-gray-700 mb-2">
+                        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Actions
                         </h2>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-700">
+                                <span className="text-xs text-gray-700 dark:text-gray-300">
                                     Auto-close after export
                                 </span>
                                 <ToggleSwitch
@@ -240,7 +323,7 @@ export const SettingsPage = () => {
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-700">
+                                <span className="text-xs text-gray-700 dark:text-gray-300">
                                     Reload preview on selection change
                                 </span>
                                 <ToggleSwitch
@@ -257,15 +340,18 @@ export const SettingsPage = () => {
                                 />
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-700">
+                                <span className="text-xs text-gray-700 dark:text-gray-300">
                                     Force compression at 100% quality
                                 </span>
                                 <ToggleSwitch
-                                    checked={tmpSetting.forceCompressionAt100Quality}
+                                    checked={
+                                        tmpSetting.forceCompressionAt100Quality
+                                    }
                                     onChange={(checked) =>
                                         setTmpSetting((prev) => ({
                                             ...prev,
-                                            forceCompressionAt100Quality: checked,
+                                            forceCompressionAt100Quality:
+                                                checked,
                                         }))
                                     }
                                 />
@@ -274,7 +360,7 @@ export const SettingsPage = () => {
                     </div>
 
                     <div className="mb-4">
-                        <h2 className="text-sm font-medium text-gray-700 mb-2">
+                        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Preview Name Case
                         </h2>
                         <div className="flex gap-4 text-xs">
@@ -296,7 +382,9 @@ export const SettingsPage = () => {
                                     }
                                     className="mr-2 w-3 h-3"
                                 />
-                                <span className="text-gray-700">Original</span>
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    Original
+                                </span>
                             </label>
                             <label className="flex items-center">
                                 <input
@@ -316,7 +404,9 @@ export const SettingsPage = () => {
                                     }
                                     className="mr-2 w-3 h-3"
                                 />
-                                <span className="text-gray-700">Lowercase</span>
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    Lowercase
+                                </span>
                             </label>
                             <label className="flex items-center">
                                 <input
@@ -336,21 +426,23 @@ export const SettingsPage = () => {
                                     }
                                     className="mr-2 w-3 h-3"
                                 />
-                                <span className="text-gray-700">Uppercase</span>
+                                <span className="text-gray-700 dark:text-gray-300">
+                                    Uppercase
+                                </span>
                             </label>
                         </div>
                     </div>
 
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-sm font-medium text-gray-700">
+                            <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Preview Name Cleanup Rules
                             </h2>
                             <Button
                                 onClick={addPreviewReplacement}
                                 variant="outline"
                                 size="sm"
-                                className="h-6 px-2 text-xs bg-transparent"
+                                className="h-6 px-2 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                             >
                                 <Plus className="w-3 h-3 mr-1" />
                                 Add Rule
@@ -384,9 +476,9 @@ export const SettingsPage = () => {
                                                         ),
                                                 }));
                                             }}
-                                            className="h-6 text-xs flex-1"
+                                            className="h-6 text-xs flex-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500"
                                         />
-                                        <span className="text-gray-400 text-sm">
+                                        <span className="text-gray-400 dark:text-gray-500 text-sm">
                                             →
                                         </span>
                                         <Input
@@ -410,7 +502,7 @@ export const SettingsPage = () => {
                                                         ),
                                                 }));
                                             }}
-                                            className="h-6 text-xs flex-1"
+                                            className="h-6 text-xs flex-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500"
                                         />
                                         <Button
                                             onClick={() =>
@@ -418,7 +510,7 @@ export const SettingsPage = () => {
                                             }
                                             variant="ghost"
                                             size="sm"
-                                            className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                                            className="h-6 w-6 p-0 text-gray-400 dark:text-gray-500 hover:text-red-500"
                                         >
                                             <Trash2 className="w-3 h-3" />
                                         </Button>
@@ -430,14 +522,14 @@ export const SettingsPage = () => {
 
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
-                            <h2 className="text-sm font-medium text-gray-700">
+                            <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Export Name Cleanup Rules
                             </h2>
                             <Button
                                 onClick={addExportReplacement}
                                 variant="outline"
                                 size="sm"
-                                className="h-6 px-2 text-xs bg-transparent"
+                                className="h-6 px-2 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                             >
                                 <Plus className="w-3 h-3 mr-1" />
                                 Add Rule
@@ -471,9 +563,9 @@ export const SettingsPage = () => {
                                                         ),
                                                 }));
                                             }}
-                                            className="h-6 text-xs flex-1"
+                                            className="h-6 text-xs flex-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500"
                                         />
-                                        <span className="text-gray-400 text-sm">
+                                        <span className="text-gray-400 dark:text-gray-500 text-sm">
                                             →
                                         </span>
                                         <Input
@@ -497,7 +589,7 @@ export const SettingsPage = () => {
                                                         ),
                                                 }));
                                             }}
-                                            className="h-6 text-xs flex-1"
+                                            className="h-6 text-xs flex-1 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500"
                                         />
                                         <Button
                                             onClick={() =>
@@ -505,7 +597,7 @@ export const SettingsPage = () => {
                                             }
                                             variant="ghost"
                                             size="sm"
-                                            className="h-6 w-6 p-0 text-gray-400 hover:text-red-500"
+                                            className="h-6 w-6 p-0 text-gray-400 dark:text-gray-500 hover:text-red-500"
                                         >
                                             <Trash2 className="w-3 h-3" />
                                         </Button>
@@ -516,13 +608,13 @@ export const SettingsPage = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-200 p-3">
+                <div className="border-t border-gray-200 dark:border-gray-600 p-3 transition-colors duration-200">
                     <div className="flex justify-between items-center">
                         <button
                             onClick={onSupportUsClick}
-                            className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-amber-600 transition-colors duration-200 group"
+                            className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors duration-200 group"
                         >
-                            <Coffee className="w-3.5 h-3.5 text-amber-500 group-hover:text-amber-600" />
+                            <Coffee className="w-3.5 h-3.5 text-amber-500 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
                             <span>Support Us</span>
                         </button>
 
@@ -537,14 +629,14 @@ export const SettingsPage = () => {
                                     onClick={onGoExportPage}
                                     variant="outline"
                                     size="sm"
-                                    className="h-7 px-3 text-xs bg-transparent"
+                                    className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     onClick={onSave}
                                     size="sm"
-                                    className="h-7 px-3 text-xs bg-black hover:bg-gray-800"
+                                    className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
                                 >
                                     Save
                                 </Button>
@@ -572,10 +664,10 @@ const SettingsScopeToggle = ({
         <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
                 <FolderOpen
-                    className={`size-3 ${!isGlobal ? "text-gray-900" : "text-gray-400"}`}
+                    className={`size-3 ${!isGlobal ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
                 />
                 <span
-                    className={`text-xs ${!isGlobal ? "text-gray-900 font-medium" : "text-gray-500"}`}
+                    className={`text-xs ${!isGlobal ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-500 dark:text-gray-400"}`}
                 >
                     Project
                 </span>
@@ -592,13 +684,13 @@ const SettingsScopeToggle = ({
                 }
                 className={`
           relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-gray-400 focus:ring-offset-1
-          ${isGlobal ? "bg-black" : "bg-gray-300"}
+          ${isGlobal ? "bg-black dark:bg-white" : "bg-gray-300 dark:bg-gray-600"}
           cursor-pointer
         `}
             >
                 <span
                     className={`
-            inline-block size-3 transform rounded-full bg-white transition-transform duration-200 ease-in-out
+            inline-block size-3 transform rounded-full bg-white dark:bg-gray-800 transition-transform duration-200 ease-in-out
             ${isGlobal ? "translate-x-3.5" : "translate-x-0.5"}
           `}
                 />
@@ -606,10 +698,10 @@ const SettingsScopeToggle = ({
 
             <div className="flex items-center gap-1.5">
                 <Globe
-                    className={`size-3 ${isGlobal ? "text-gray-900" : "text-gray-400"}`}
+                    className={`size-3 ${isGlobal ? "text-gray-900 dark:text-gray-100" : "text-gray-400 dark:text-gray-500"}`}
                 />
                 <span
-                    className={`text-xs ${isGlobal ? "text-gray-900 font-medium" : "text-gray-500"}`}
+                    className={`text-xs ${isGlobal ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-500 dark:text-gray-400"}`}
                 >
                     Global
                 </span>

@@ -7,8 +7,14 @@ import {
     PluginMessageType,
     SettingScope,
     UiMessageType,
+    Theme,
 } from "@common/enum";
-import type { Setting, PreviewUi, ProjectData, CompressionStats } from "@common/interface";
+import type {
+    Setting,
+    PreviewUi,
+    ProjectData,
+    CompressionStats,
+} from "@common/interface";
 import {
     initProjectData,
     initSetting,
@@ -62,43 +68,10 @@ type AppStore = {
             | typeof ExportScale5Schema
     ) => void;
     onSaveSetting: (settingScope: SettingScope, setting: Setting) => void;
-};
-
-const showCompressionStats = (
-    totalOriginalSize: number,
-    totalCompressedSize: number,
-    compressedImagesCount: number
-) => {
-    if (compressedImagesCount === 0) {
-        return;
-    }
-    
-    const totalSavings = totalOriginalSize - totalCompressedSize;
-    const compressionRatio = totalSavings / totalOriginalSize;
-    const compressionPercentage = Math.round(compressionRatio * 100);
-    
-    const formatBytes = (bytes: number): string => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    };
-    
-    const originalSizeFormatted = formatBytes(totalOriginalSize);
-    const compressedSizeFormatted = formatBytes(totalCompressedSize);
-    const savingsFormatted = formatBytes(totalSavings);
-    
-    console.log(`🗜️ Compression Statistics:`);
-    console.log(`📊 ${compressedImagesCount} image(s) compressed`);
-    console.log(`📏 Original: ${originalSizeFormatted} → Compressed: ${compressedSizeFormatted}`);
-    console.log(`💾 Saved: ${savingsFormatted} (${compressionPercentage}% reduction)`);
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Export Complete', {
-            body: `Compressed ${compressedImagesCount} image(s), saved ${savingsFormatted} (${compressionPercentage}% reduction)`,
-            icon: '/favicon.ico'
-        });
-    }
+    currentTheme: Theme;
+    isDarkMode: boolean;
+    initializeTheme: () => void;
+    applyTheme: (theme: Theme) => void;
 };
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -106,6 +79,55 @@ export const useAppStore = create<AppStore>((set, get) => ({
     page: Page.LOADING,
     onGoSettingsPage: () => set({ page: Page.SETTINGS }),
     onGoExportPage: () => set({ page: Page.EXPORT }),
+    currentTheme: Theme.SYSTEM,
+    isDarkMode: false,
+    initializeTheme: () => {
+        const { setting } = get();
+        const systemDarkMode = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        ).matches;
+
+        let shouldBeDark = false;
+
+        if (setting.theme === Theme.DARK) {
+            shouldBeDark = true;
+        } else if (setting.theme === Theme.LIGHT) {
+            shouldBeDark = false;
+        } else {
+            shouldBeDark = systemDarkMode;
+        }
+
+        if (shouldBeDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+
+        set({ currentTheme: setting.theme, isDarkMode: shouldBeDark });
+    },
+    applyTheme: (theme: Theme) => {
+        const systemDarkMode = window.matchMedia(
+            "(prefers-color-scheme: dark)"
+        ).matches;
+
+        let shouldBeDark = false;
+
+        if (theme === Theme.DARK) {
+            shouldBeDark = true;
+        } else if (theme === Theme.LIGHT) {
+            shouldBeDark = false;
+        } else {
+            shouldBeDark = systemDarkMode;
+        }
+
+        if (shouldBeDark) {
+            document.documentElement.classList.add("dark");
+        } else {
+            document.documentElement.classList.remove("dark");
+        }
+
+        set({ currentTheme: theme, isDarkMode: shouldBeDark });
+    },
     setInit: (data) => {
         const [_, result] = validate(
             data,
@@ -141,6 +163,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
             projectData,
             page: Page.EXPORT,
         });
+
+        get().initializeTheme();
     },
     previews: [],
     setPreviews: (data) => {
@@ -206,7 +230,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
             },
         })),
     onChangeQuality: (event) => {
-        const quality = Math.max(1, Math.min(100, parseInt(event.target.value) || 100));
+        const quality = Math.max(
+            1,
+            Math.min(100, parseInt(event.target.value) || 100)
+        );
         set((state) => ({
             projectData: {
                 ...state.projectData,
@@ -295,7 +322,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         };
 
         const zipData: Record<string, Uint8Array> = {};
-        
+
         let totalOriginalSize = 0;
         let totalCompressedSize = 0;
         let compressedImagesCount = 0;
@@ -329,21 +356,33 @@ export const useAppStore = create<AppStore>((set, get) => ({
                         let u8: Uint8Array;
 
                         if (exportData.format === Format.WEBP) {
-                            u8 = await u8ToWebPBytes(exportData.buffer, projectData.quality);
+                            u8 = await u8ToWebPBytes(
+                                exportData.buffer,
+                                projectData.quality
+                            );
                             totalOriginalSize += exportData.buffer.length;
                             totalCompressedSize += u8.length;
                             if (u8.length < exportData.buffer.length) {
                                 compressedImagesCount++;
                             }
-                        } else if (exportData.format === Format.JPG || exportData.format === Format.PNG) {
-                            const compressionResult = await compressImageBufferWithStats(exportData.buffer, {
-                                quality: projectData.quality,
-                                format: exportData.format,
-                                forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                            });
+                        } else if (
+                            exportData.format === Format.JPG ||
+                            exportData.format === Format.PNG
+                        ) {
+                            const compressionResult =
+                                await compressImageBufferWithStats(
+                                    exportData.buffer,
+                                    {
+                                        quality: projectData.quality,
+                                        format: exportData.format,
+                                        forceCompressionAt100Quality:
+                                            setting.forceCompressionAt100Quality,
+                                    }
+                                );
                             u8 = compressionResult.buffer;
                             totalOriginalSize += compressionResult.originalSize;
-                            totalCompressedSize += compressionResult.compressedSize;
+                            totalCompressedSize +=
+                                compressionResult.compressedSize;
                             if (compressionResult.wasCompressed) {
                                 compressedImagesCount++;
                             }
@@ -379,36 +418,78 @@ export const useAppStore = create<AppStore>((set, get) => ({
                             scale3: Uint8Array;
 
                         if (exportData.format === Format.WEBP) {
-                            scale1 = await u8ToWebPBytes(exportData.scale1, projectData.quality);
-                            scale2 = await u8ToWebPBytes(exportData.scale2, projectData.quality);
-                            scale3 = await u8ToWebPBytes(exportData.scale3, projectData.quality);
-                            totalOriginalSize += exportData.scale1.length + exportData.scale2.length + exportData.scale3.length;
-                            totalCompressedSize += scale1.length + scale2.length + scale3.length;
-                            if (scale1.length < exportData.scale1.length || scale2.length < exportData.scale2.length || scale3.length < exportData.scale3.length) {
+                            scale1 = await u8ToWebPBytes(
+                                exportData.scale1,
+                                projectData.quality
+                            );
+                            scale2 = await u8ToWebPBytes(
+                                exportData.scale2,
+                                projectData.quality
+                            );
+                            scale3 = await u8ToWebPBytes(
+                                exportData.scale3,
+                                projectData.quality
+                            );
+                            totalOriginalSize +=
+                                exportData.scale1.length +
+                                exportData.scale2.length +
+                                exportData.scale3.length;
+                            totalCompressedSize +=
+                                scale1.length + scale2.length + scale3.length;
+                            if (
+                                scale1.length < exportData.scale1.length ||
+                                scale2.length < exportData.scale2.length ||
+                                scale3.length < exportData.scale3.length
+                            ) {
                                 compressedImagesCount++;
                             }
-                        } else if (exportData.format === Format.JPG || exportData.format === Format.PNG) {
-                            const result1 = await compressImageBufferWithStats(exportData.scale1, {
-                                quality: projectData.quality,
-                                format: exportData.format,
-                                forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                            });
-                            const result2 = await compressImageBufferWithStats(exportData.scale2, {
-                                quality: projectData.quality,
-                                format: exportData.format,
-                                forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                            });
-                            const result3 = await compressImageBufferWithStats(exportData.scale3, {
-                                quality: projectData.quality,
-                                format: exportData.format,
-                                forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                            });
+                        } else if (
+                            exportData.format === Format.JPG ||
+                            exportData.format === Format.PNG
+                        ) {
+                            const result1 = await compressImageBufferWithStats(
+                                exportData.scale1,
+                                {
+                                    quality: projectData.quality,
+                                    format: exportData.format,
+                                    forceCompressionAt100Quality:
+                                        setting.forceCompressionAt100Quality,
+                                }
+                            );
+                            const result2 = await compressImageBufferWithStats(
+                                exportData.scale2,
+                                {
+                                    quality: projectData.quality,
+                                    format: exportData.format,
+                                    forceCompressionAt100Quality:
+                                        setting.forceCompressionAt100Quality,
+                                }
+                            );
+                            const result3 = await compressImageBufferWithStats(
+                                exportData.scale3,
+                                {
+                                    quality: projectData.quality,
+                                    format: exportData.format,
+                                    forceCompressionAt100Quality:
+                                        setting.forceCompressionAt100Quality,
+                                }
+                            );
                             scale1 = result1.buffer;
                             scale2 = result2.buffer;
                             scale3 = result3.buffer;
-                            totalOriginalSize += result1.originalSize + result2.originalSize + result3.originalSize;
-                            totalCompressedSize += result1.compressedSize + result2.compressedSize + result3.compressedSize;
-                            if (result1.wasCompressed || result2.wasCompressed || result3.wasCompressed) {
+                            totalOriginalSize +=
+                                result1.originalSize +
+                                result2.originalSize +
+                                result3.originalSize;
+                            totalCompressedSize +=
+                                result1.compressedSize +
+                                result2.compressedSize +
+                                result3.compressedSize;
+                            if (
+                                result1.wasCompressed ||
+                                result2.wasCompressed ||
+                                result3.wasCompressed
+                            ) {
                                 compressedImagesCount++;
                             }
                         } else {
@@ -453,53 +534,126 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 scale4: Uint8Array;
 
                             if (exportData.format === Format.WEBP) {
-                                scale1 = await u8ToWebPBytes(exportData.scale1, projectData.quality);
+                                scale1 = await u8ToWebPBytes(
+                                    exportData.scale1,
+                                    projectData.quality
+                                );
                                 scale1_5 = await u8ToWebPBytes(
                                     exportData.scale1_5,
                                     projectData.quality
                                 );
-                                scale2 = await u8ToWebPBytes(exportData.scale2, projectData.quality);
-                                scale3 = await u8ToWebPBytes(exportData.scale3, projectData.quality);
-                                scale4 = await u8ToWebPBytes(exportData.scale4, projectData.quality);
-                                totalOriginalSize += exportData.scale1.length + exportData.scale1_5.length + exportData.scale2.length + exportData.scale3.length + exportData.scale4.length;
-                                totalCompressedSize += scale1.length + scale1_5.length + scale2.length + scale3.length + scale4.length;
-                                if (scale1.length < exportData.scale1.length || scale1_5.length < exportData.scale1_5.length || scale2.length < exportData.scale2.length || scale3.length < exportData.scale3.length || scale4.length < exportData.scale4.length) {
+                                scale2 = await u8ToWebPBytes(
+                                    exportData.scale2,
+                                    projectData.quality
+                                );
+                                scale3 = await u8ToWebPBytes(
+                                    exportData.scale3,
+                                    projectData.quality
+                                );
+                                scale4 = await u8ToWebPBytes(
+                                    exportData.scale4,
+                                    projectData.quality
+                                );
+                                totalOriginalSize +=
+                                    exportData.scale1.length +
+                                    exportData.scale1_5.length +
+                                    exportData.scale2.length +
+                                    exportData.scale3.length +
+                                    exportData.scale4.length;
+                                totalCompressedSize +=
+                                    scale1.length +
+                                    scale1_5.length +
+                                    scale2.length +
+                                    scale3.length +
+                                    scale4.length;
+                                if (
+                                    scale1.length < exportData.scale1.length ||
+                                    scale1_5.length <
+                                        exportData.scale1_5.length ||
+                                    scale2.length < exportData.scale2.length ||
+                                    scale3.length < exportData.scale3.length ||
+                                    scale4.length < exportData.scale4.length
+                                ) {
                                     compressedImagesCount++;
                                 }
-                            } else if (exportData.format === Format.JPG || exportData.format === Format.PNG) {
-                                const result1 = await compressImageBufferWithStats(exportData.scale1, {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                                });
-                                const result1_5 = await compressImageBufferWithStats(exportData.scale1_5, {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                                });
-                                const result2 = await compressImageBufferWithStats(exportData.scale2, {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                                });
-                                const result3 = await compressImageBufferWithStats(exportData.scale3, {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                                });
-                                const result4 = await compressImageBufferWithStats(exportData.scale4, {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality: setting.forceCompressionAt100Quality
-                                });
+                            } else if (
+                                exportData.format === Format.JPG ||
+                                exportData.format === Format.PNG
+                            ) {
+                                const result1 =
+                                    await compressImageBufferWithStats(
+                                        exportData.scale1,
+                                        {
+                                            quality: projectData.quality,
+                                            format: exportData.format,
+                                            forceCompressionAt100Quality:
+                                                setting.forceCompressionAt100Quality,
+                                        }
+                                    );
+                                const result1_5 =
+                                    await compressImageBufferWithStats(
+                                        exportData.scale1_5,
+                                        {
+                                            quality: projectData.quality,
+                                            format: exportData.format,
+                                            forceCompressionAt100Quality:
+                                                setting.forceCompressionAt100Quality,
+                                        }
+                                    );
+                                const result2 =
+                                    await compressImageBufferWithStats(
+                                        exportData.scale2,
+                                        {
+                                            quality: projectData.quality,
+                                            format: exportData.format,
+                                            forceCompressionAt100Quality:
+                                                setting.forceCompressionAt100Quality,
+                                        }
+                                    );
+                                const result3 =
+                                    await compressImageBufferWithStats(
+                                        exportData.scale3,
+                                        {
+                                            quality: projectData.quality,
+                                            format: exportData.format,
+                                            forceCompressionAt100Quality:
+                                                setting.forceCompressionAt100Quality,
+                                        }
+                                    );
+                                const result4 =
+                                    await compressImageBufferWithStats(
+                                        exportData.scale4,
+                                        {
+                                            quality: projectData.quality,
+                                            format: exportData.format,
+                                            forceCompressionAt100Quality:
+                                                setting.forceCompressionAt100Quality,
+                                        }
+                                    );
                                 scale1 = result1.buffer;
                                 scale1_5 = result1_5.buffer;
                                 scale2 = result2.buffer;
                                 scale3 = result3.buffer;
                                 scale4 = result4.buffer;
-                                totalOriginalSize += result1.originalSize + result1_5.originalSize + result2.originalSize + result3.originalSize + result4.originalSize;
-                                totalCompressedSize += result1.compressedSize + result1_5.compressedSize + result2.compressedSize + result3.compressedSize + result4.compressedSize;
-                                if (result1.wasCompressed || result1_5.wasCompressed || result2.wasCompressed || result3.wasCompressed || result4.wasCompressed) {
+                                totalOriginalSize +=
+                                    result1.originalSize +
+                                    result1_5.originalSize +
+                                    result2.originalSize +
+                                    result3.originalSize +
+                                    result4.originalSize;
+                                totalCompressedSize +=
+                                    result1.compressedSize +
+                                    result1_5.compressedSize +
+                                    result2.compressedSize +
+                                    result3.compressedSize +
+                                    result4.compressedSize;
+                                if (
+                                    result1.wasCompressed ||
+                                    result1_5.wasCompressed ||
+                                    result2.wasCompressed ||
+                                    result3.wasCompressed ||
+                                    result4.wasCompressed
+                                ) {
                                     compressedImagesCount++;
                                 }
                             } else {
@@ -566,15 +720,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 blob,
                 `${firstExportData.name}.${firstExportData.format}`
             );
-            
+
             const compressionStats: CompressionStats = {
                 compressedImagesCount,
                 totalOriginalSize,
                 totalCompressedSize,
-                compressionRatio: totalOriginalSize > 0 ? (totalOriginalSize - totalCompressedSize) / totalOriginalSize : 0
+                compressionRatio:
+                    totalOriginalSize > 0
+                        ? (totalOriginalSize - totalCompressedSize) /
+                          totalOriginalSize
+                        : 0,
             };
-
-            showCompressionStats(totalOriginalSize, totalCompressedSize, compressedImagesCount);
 
             parent.postMessage(
                 {
@@ -608,10 +764,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
                     compressedImagesCount,
                     totalOriginalSize,
                     totalCompressedSize,
-                    compressionRatio: totalOriginalSize > 0 ? (totalOriginalSize - totalCompressedSize) / totalOriginalSize : 0
+                    compressionRatio:
+                        totalOriginalSize > 0
+                            ? (totalOriginalSize - totalCompressedSize) /
+                              totalOriginalSize
+                            : 0,
                 };
-
-                showCompressionStats(totalOriginalSize, totalCompressedSize, compressedImagesCount);
 
                 parent.postMessage(
                     {

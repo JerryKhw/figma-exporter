@@ -1,35 +1,77 @@
-import React, { useCallback } from "react";
-import { PreviewUi } from "../../../interface";
-import { Input } from "@/components/ui/input"
+import React from "react";
 
-interface PreviewProps {
-    preview: PreviewUi
-    onChange: (event: React.ChangeEvent<HTMLInputElement>, id: string) => void,
-    onDelete: (id: string) => void
-}
+import { X } from "lucide-react";
+import { Input } from "@ui/components/ui/input";
+
+import type { PreviewUi } from "@common/interface";
+import { ViewMode } from "@common/enum";
 
 export const PreviewItem = ({
+    viewMode,
     preview,
     onChange,
     onDelete,
-}: PreviewProps) => {
-    const _onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-        onChange(event, preview.id)
-    }, [preview, onChange])
-
-    const _onDelete = useCallback(() => {
-        onDelete(preview.id)
-    }, [preview, onDelete])
-
+}: {
+    viewMode: ViewMode;
+    preview: PreviewUi;
+    onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    onDelete: () => void;
+}) => {
     return (
-        <div className="relative">
-            <img className="w-full aspect-square border border-b-0 object-contain bg-preview pointer-events-none" src={`data:image/png;base64,${preview.base64}`} alt="" />
-            <Input className="h-6 border text-sm rounded-none p-0" placeholder="name" value={preview.name} onChange={_onChange} />
-            <div className="absolute top-1 right-1" onClick={_onDelete} >
-                <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="14" height="14" viewBox="0 0 50 50">
-                    <path d="M 9.15625 6.3125 L 6.3125 9.15625 L 22.15625 25 L 6.21875 40.96875 L 9.03125 43.78125 L 25 27.84375 L 40.9375 43.78125 L 43.78125 40.9375 L 27.84375 25 L 43.6875 9.15625 L 40.84375 6.3125 L 25 22.15625 Z"></path>
-                </svg>
+        <div
+            key={preview.id}
+            className={`flex ${
+                viewMode === ViewMode.LIST
+                    ? "flex-row items-center gap-3"
+                    : "flex-col items-center"
+            }`}
+        >
+            <div
+                className={`${
+                    viewMode === ViewMode.LIST
+                        ? "size-12 shrink-0"
+                        : "w-full aspect-square"
+                } relative rounded-lg border border-gray-200 overflow-hidden ${
+                    viewMode === ViewMode.GRID ? "mb-2" : ""
+                } bg-white group`}
+            >
+                <button
+                    onClick={onDelete}
+                    className="absolute top-1 right-1 size-5 bg-black hover:bg-gray-800 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                    title="Delete image"
+                >
+                    <X className="size-3" />
+                </button>
+
+                <div
+                    className="absolute inset-0 opacity-30"
+                    style={{
+                        backgroundImage: `
+              linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+              linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+              linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+              linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)
+            `,
+                        backgroundSize: "8px 8px",
+                        backgroundPosition: "0 0, 0 4px, 4px -4px, -4px 0px",
+                    }}
+                />
+                <img
+                    src={`data:image/png;base64,${preview.base64}`}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-contain"
+                />
             </div>
+            <Input
+                placeholder="name"
+                value={preview.name}
+                onChange={onChange}
+                className={`h-7 text-xs ${
+                    viewMode === ViewMode.LIST
+                        ? "flex-1 text-left"
+                        : "text-center w-full"
+                } border-gray-200 focus:outline-hidden focus:ring-0 focus:border-gray-400`}
+            />
         </div>
-    )
-}
+    );
+};

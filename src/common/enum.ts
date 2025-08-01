@@ -1,7 +1,6 @@
 export enum PluginMessageType {
-    PREVIEW = "PREVIEW",
-    SETTING = "SETTING",
-    GLOBAL_SETTING = "GLOBAL_SETTING",
+    PREVIEWS = "PREVIEWS",
+    INIT = "INIT",
     EXPORT_WEB = "EXPORT_WEB",
     EXPORT_ANDROID = "EXPORT_ANDROID",
     EXPORT_iOS = "EXPORT_iOS",
@@ -12,9 +11,9 @@ export enum PluginMessageType {
 }
 
 export enum UiMessageType {
-    SETTING = "SETTING",
-    GLOBAL_SETTING = "GLOBAL_SETTING",
-    EXPORT = "EXPORT",
+    REQUEST_EXPORT = "REQUEST_EXPORT",
+    SUCCESS_EXPORT = "SUCCESS_EXPORT",
+    SAVE_SETTING = "SAVE_SETTING",
     ERROR = "ERROR",
     RESIZE = "RESIZE",
 }
@@ -30,18 +29,29 @@ export enum Platform {
 export enum Format {
     PNG = "png",
     JPG = "jpg",
+    WEBP = "webp",
     SVG = "svg",
     PDF = "pdf",
-    WEBP = "webp",
 }
 
-export enum CharacterCase {
-    DEFAULT = "default",
+export enum NameCase {
+    ORIGINAL = "original",
     LOWER_CASE = "lowerCase",
     UPPER_CASE = "upperCase",
 }
 
-export enum PageType {
+export enum Page {
     LOADING,
     EXPORT,
+    SETTINGS,
+}
+
+export enum ViewMode {
+    GRID = "grid",
+    LIST = "list",
+}
+
+export enum SettingScope {
+    PROJECT = "project",
+    GLOBAL = "global",
 }

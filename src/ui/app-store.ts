@@ -436,13 +436,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 exportData.scale3.length;
                             totalCompressedSize +=
                                 scale1.length + scale2.length + scale3.length;
-                            if (
-                                scale1.length < exportData.scale1.length ||
-                                scale2.length < exportData.scale2.length ||
-                                scale3.length < exportData.scale3.length
-                            ) {
-                                compressedImagesCount++;
-                            }
+                            let scaleCompressionCount = 0;
+                            if (scale1.length < exportData.scale1.length) scaleCompressionCount++;
+                            if (scale2.length < exportData.scale2.length) scaleCompressionCount++;
+                            if (scale3.length < exportData.scale3.length) scaleCompressionCount++;
+                            compressedImagesCount += scaleCompressionCount;
                         } else if (
                             exportData.format === Format.JPG ||
                             exportData.format === Format.PNG
@@ -485,13 +483,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 result1.compressedSize +
                                 result2.compressedSize +
                                 result3.compressedSize;
-                            if (
-                                result1.wasCompressed ||
-                                result2.wasCompressed ||
-                                result3.wasCompressed
-                            ) {
-                                compressedImagesCount++;
-                            }
+                            let scaleCompressionCount = 0;
+                            if (result1.wasCompressed) scaleCompressionCount++;
+                            if (result2.wasCompressed) scaleCompressionCount++;
+                            if (result3.wasCompressed) scaleCompressionCount++;
+                            compressedImagesCount += scaleCompressionCount;
                         } else {
                             scale1 = exportData.scale1;
                             scale2 = exportData.scale2;
@@ -566,16 +562,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     scale2.length +
                                     scale3.length +
                                     scale4.length;
-                                if (
-                                    scale1.length < exportData.scale1.length ||
-                                    scale1_5.length <
-                                        exportData.scale1_5.length ||
-                                    scale2.length < exportData.scale2.length ||
-                                    scale3.length < exportData.scale3.length ||
-                                    scale4.length < exportData.scale4.length
-                                ) {
-                                    compressedImagesCount++;
-                                }
+                                let scaleCompressionCount = 0;
+                                if (scale1.length < exportData.scale1.length) scaleCompressionCount++;
+                                if (scale1_5.length < exportData.scale1_5.length) scaleCompressionCount++;
+                                if (scale2.length < exportData.scale2.length) scaleCompressionCount++;
+                                if (scale3.length < exportData.scale3.length) scaleCompressionCount++;
+                                if (scale4.length < exportData.scale4.length) scaleCompressionCount++;
+                                compressedImagesCount += scaleCompressionCount;
                             } else if (
                                 exportData.format === Format.JPG ||
                                 exportData.format === Format.PNG
@@ -647,15 +640,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     result2.compressedSize +
                                     result3.compressedSize +
                                     result4.compressedSize;
-                                if (
-                                    result1.wasCompressed ||
-                                    result1_5.wasCompressed ||
-                                    result2.wasCompressed ||
-                                    result3.wasCompressed ||
-                                    result4.wasCompressed
-                                ) {
-                                    compressedImagesCount++;
-                                }
+                                let scaleCompressionCount = 0;
+                                if (result1.wasCompressed) scaleCompressionCount++;
+                                if (result1_5.wasCompressed) scaleCompressionCount++;
+                                if (result2.wasCompressed) scaleCompressionCount++;
+                                if (result3.wasCompressed) scaleCompressionCount++;
+                                if (result4.wasCompressed) scaleCompressionCount++;
+                                compressedImagesCount += scaleCompressionCount;
                             } else {
                                 scale1 = exportData.scale1;
                                 scale1_5 = exportData.scale1_5;

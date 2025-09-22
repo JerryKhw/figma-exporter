@@ -26,12 +26,13 @@ import {
     ExportScale5Schema,
 } from "@common/interface";
 import { toBase64 } from "@common/base64";
-import { array, object, validate } from "superstruct";
+import { array, boolean, object, validate } from "superstruct";
 import { downloadBlob, u8ToWebPBytes } from "./lib/utils";
 import { compressImageBufferWithStats } from "./lib/image-compression";
 import { zip } from "fflate";
 
 type AppStore = {
+    isDev: boolean;
     isLoading: boolean;
     page: Page;
     onGoSettingsPage: () => void;
@@ -75,6 +76,7 @@ type AppStore = {
 };
 
 export const useAppStore = create<AppStore>((set, get) => ({
+    isDev: false,
     isLoading: false,
     page: Page.LOADING,
     onGoSettingsPage: () => set({ page: Page.SETTINGS }),
@@ -132,6 +134,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         const [_, result] = validate(
             data,
             object({
+                isDev: boolean(),
                 previews: array(PreviewSchema),
                 globalSetting: SettingSchema,
                 projectSetting: SettingSchema,
@@ -144,7 +147,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        const { previews, globalSetting, projectSetting, projectData } = result;
+        const { isDev, previews, globalSetting, projectSetting, projectData } =
+            result;
 
         const setting =
             projectData.settingScope === SettingScope.GLOBAL
@@ -152,6 +156,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 : projectSetting;
 
         set({
+            isDev,
             previews: previews.map((preview) => ({
                 id: preview.id,
                 name: preview.name,
@@ -437,9 +442,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
                             totalCompressedSize +=
                                 scale1.length + scale2.length + scale3.length;
                             let scaleCompressionCount = 0;
-                            if (scale1.length < exportData.scale1.length) scaleCompressionCount++;
-                            if (scale2.length < exportData.scale2.length) scaleCompressionCount++;
-                            if (scale3.length < exportData.scale3.length) scaleCompressionCount++;
+                            if (scale1.length < exportData.scale1.length)
+                                scaleCompressionCount++;
+                            if (scale2.length < exportData.scale2.length)
+                                scaleCompressionCount++;
+                            if (scale3.length < exportData.scale3.length)
+                                scaleCompressionCount++;
                             compressedImagesCount += scaleCompressionCount;
                         } else if (
                             exportData.format === Format.JPG ||
@@ -563,11 +571,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     scale3.length +
                                     scale4.length;
                                 let scaleCompressionCount = 0;
-                                if (scale1.length < exportData.scale1.length) scaleCompressionCount++;
-                                if (scale1_5.length < exportData.scale1_5.length) scaleCompressionCount++;
-                                if (scale2.length < exportData.scale2.length) scaleCompressionCount++;
-                                if (scale3.length < exportData.scale3.length) scaleCompressionCount++;
-                                if (scale4.length < exportData.scale4.length) scaleCompressionCount++;
+                                if (scale1.length < exportData.scale1.length)
+                                    scaleCompressionCount++;
+                                if (
+                                    scale1_5.length < exportData.scale1_5.length
+                                )
+                                    scaleCompressionCount++;
+                                if (scale2.length < exportData.scale2.length)
+                                    scaleCompressionCount++;
+                                if (scale3.length < exportData.scale3.length)
+                                    scaleCompressionCount++;
+                                if (scale4.length < exportData.scale4.length)
+                                    scaleCompressionCount++;
                                 compressedImagesCount += scaleCompressionCount;
                             } else if (
                                 exportData.format === Format.JPG ||
@@ -641,11 +656,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     result3.compressedSize +
                                     result4.compressedSize;
                                 let scaleCompressionCount = 0;
-                                if (result1.wasCompressed) scaleCompressionCount++;
-                                if (result1_5.wasCompressed) scaleCompressionCount++;
-                                if (result2.wasCompressed) scaleCompressionCount++;
-                                if (result3.wasCompressed) scaleCompressionCount++;
-                                if (result4.wasCompressed) scaleCompressionCount++;
+                                if (result1.wasCompressed)
+                                    scaleCompressionCount++;
+                                if (result1_5.wasCompressed)
+                                    scaleCompressionCount++;
+                                if (result2.wasCompressed)
+                                    scaleCompressionCount++;
+                                if (result3.wasCompressed)
+                                    scaleCompressionCount++;
+                                if (result4.wasCompressed)
+                                    scaleCompressionCount++;
                                 compressedImagesCount += scaleCompressionCount;
                             } else {
                                 scale1 = exportData.scale1;

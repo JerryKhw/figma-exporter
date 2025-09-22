@@ -68,6 +68,7 @@ const platformList = [
 
 export const ExportPage = () => {
     const {
+        isDev,
         isLoading,
         onGoSettingsPage,
         previews,
@@ -229,37 +230,70 @@ export const ExportPage = () => {
                                     />
                                 </CustomTooltip>
                             </div>
+
+                            {isDev && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+                                        onClick={onGoSettingsPage}
+                                    >
+                                        <Settings className="h-3 w-3 mr-1" />
+                                        Settings
+                                    </Button>
+
+                                    <div className="relative">
+                                        <div className="flex">
+                                            <Button
+                                                size="sm"
+                                                className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
+                                                onClick={onExport}
+                                                disabled={isLoading}
+                                            >
+                                                {isLoading
+                                                    ? "Exporting..."
+                                                    : "Export"}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                                onClick={onGoSettingsPage}
-                            >
-                                <Settings className="h-3 w-3 mr-1" />
-                                Settings
-                            </Button>
+                        {!isDev && (
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+                                    onClick={onGoSettingsPage}
+                                >
+                                    <Settings className="h-3 w-3 mr-1" />
+                                    Settings
+                                </Button>
 
-                            <div className="relative">
-                                <div className="flex">
-                                    <Button
-                                        size="sm"
-                                        className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
-                                        onClick={onExport}
-                                        disabled={isLoading}
-                                    >
-                                        {isLoading ? "Exporting..." : "Export"}
-                                    </Button>
+                                <div className="relative">
+                                    <div className="flex">
+                                        <Button
+                                            size="sm"
+                                            className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
+                                            onClick={onExport}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading
+                                                ? "Exporting..."
+                                                : "Export"}
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>
 
-            <ResizeHandle />
+            {!isDev && <ResizeHandle />}
             <LoadingOverlay isLoading={isLoading} />
         </>
     );

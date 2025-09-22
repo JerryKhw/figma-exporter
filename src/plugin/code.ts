@@ -143,7 +143,9 @@ const getPreview = async (
     };
 };
 
-if (figma.editorType === "dev") {
+const isDev = figma.editorType === "dev";
+
+if (isDev) {
     figma.showUI(__html__, { themeColors: true });
 } else {
     getData(GlobalKey.SIZE).then((data) => {
@@ -219,7 +221,17 @@ Promise.all([
     const [_e3, result3] = validate(data3, SettingSchema);
 
     projectData = result1 || initProjectData;
-    const globalSetting = result3 || initSetting;
+    const globalSetting =
+        result3 ||
+        (isDev
+            ? {
+                  ...initSetting,
+                  perRow: 2,
+                  autoCloseAfterExport: false,
+                  reloadPreviewOnSelectionChange: true,
+              }
+            : initSetting);
+
     const projectSetting = result2 || globalSetting;
 
     const currentSetting =
@@ -244,6 +256,7 @@ Promise.all([
     figma.ui.postMessage({
         type: PluginMessageType.INIT,
         data: {
+            isDev,
             previews,
             projectData,
             projectSetting,

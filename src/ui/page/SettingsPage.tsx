@@ -27,6 +27,7 @@ import { ResizeHandle } from "@ui/components/custom";
 
 export const SettingsPage = () => {
     const {
+        isDev,
         onGoExportPage,
         projectData,
         globalSetting,
@@ -608,7 +609,7 @@ export const SettingsPage = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-gray-600 p-3 transition-colors duration-200">
+                <div className="border-t border-gray-200 dark:border-gray-600 p-3 transition-colors duration-200 gap-2 flex flex-col">
                     <div className="flex justify-between items-center">
                         <button
                             onClick={onSupportUsClick}
@@ -624,29 +625,51 @@ export const SettingsPage = () => {
                                 onChange={onChangeTmpSettingScope}
                             />
 
-                            <div className="flex gap-2">
-                                <Button
-                                    onClick={onGoExportPage}
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                                >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={onSave}
-                                    size="sm"
-                                    className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
-                                >
-                                    Save
-                                </Button>
-                            </div>
+                            {!isDev && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        onClick={onGoExportPage}
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={onSave}
+                                        size="sm"
+                                        className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
+
+                    {isDev && (
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={onGoExportPage}
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={onSave}
+                                size="sm"
+                                className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <ResizeHandle />
+            {!isDev && <ResizeHandle />}
         </>
     );
 };

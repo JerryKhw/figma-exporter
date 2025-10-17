@@ -52,6 +52,7 @@ export const ProjectDataSchema = object({
     prefix: string(),
     suffix: string(),
     quality: number(),
+    scale: number(),
 });
 
 export type ProjectData = Infer<typeof ProjectDataSchema>;
@@ -70,6 +71,7 @@ export const initProjectData: ProjectData = {
     prefix: "",
     suffix: "",
     quality: 100,
+    scale: 1,
 };
 
 export const CleanupRuleSchema = object({

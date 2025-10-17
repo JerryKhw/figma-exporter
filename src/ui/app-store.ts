@@ -51,6 +51,8 @@ type AppStore = {
     onChangePrefix: React.ChangeEventHandler<HTMLInputElement>;
     onChangeSuffix: React.ChangeEventHandler<HTMLInputElement>;
     onChangeQuality: React.ChangeEventHandler<HTMLInputElement>;
+    onChangeScale: React.ChangeEventHandler<HTMLInputElement>;
+    onBlurScale: React.FocusEventHandler<HTMLInputElement>;
     _sanitizeExportName: (setting: Setting, name: string) => string;
     onExport: () => void;
     saveExport: (
@@ -246,6 +248,57 @@ export const useAppStore = create<AppStore>((set, get) => ({
             },
         }));
     },
+    onChangeScale: (event) => {
+        const value = event.target.value;
+
+        if (value === "" || value === "." || value === "0.") {
+            set((state) => ({
+                projectData: {
+                    ...state.projectData,
+                    scale: value as any,
+                },
+            }));
+            return;
+        }
+
+        const parsed = parseFloat(value);
+        if (!isNaN(parsed)) {
+            set((state) => ({
+                projectData: {
+                    ...state.projectData,
+                    scale: parsed,
+                },
+            }));
+        }
+    },
+    onBlurScale: (_event) => {
+        const { projectData } = get();
+        const currentScale = projectData.scale;
+
+        if (
+            typeof currentScale !== "number" ||
+            isNaN(currentScale) ||
+            currentScale <= 0
+        ) {
+            set((state) => ({
+                projectData: {
+                    ...state.projectData,
+                    scale: 1,
+                },
+            }));
+            return;
+        }
+
+        const clampedScale = Math.max(0.5, Math.min(4, currentScale));
+        if (clampedScale !== currentScale) {
+            set((state) => ({
+                projectData: {
+                    ...state.projectData,
+                    scale: clampedScale,
+                },
+            }));
+        }
+    },
     _sanitizeExportName: (setting, name) => {
         let tmpExportName = name;
 
@@ -305,6 +358,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
+        let normalizedScale = projectData.scale;
+        if (
+            typeof normalizedScale !== "number" ||
+            isNaN(normalizedScale) ||
+            normalizedScale <= 0
+        ) {
+            normalizedScale = 1;
+        } else {
+            normalizedScale = Math.max(0.5, Math.min(4, normalizedScale));
+        }
+
+        const normalizedProjectData = {
+            ...projectData,
+            scale: normalizedScale,
+        };
+
         set({ isLoading: true });
 
         parent.postMessage(
@@ -313,7 +382,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
                     type: UiMessageType.REQUEST_EXPORT,
                     data: {
                         previews: previews,
-                        projectData: projectData,
+                        projectData: normalizedProjectData,
                     },
                 },
             },

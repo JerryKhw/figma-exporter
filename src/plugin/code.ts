@@ -209,6 +209,10 @@ Promise.all([
     getData(ProjectKey.SETTING),
     getData(GlobalKey.SETTING),
 ]).then(async ([data1, data2, data3]) => {
+    if (data1 && typeof data1 === "object" && !("scale" in data1)) {
+        data1 = { ...data1, scale: 1 };
+    }
+
     if (data2 && typeof data2 === "object" && !("theme" in data2)) {
         data2 = { ...data2, theme: Theme.SYSTEM };
     }
@@ -383,7 +387,8 @@ figma.ui.onmessage = async (msg: UiMessage) => {
             }
 
             const { previews, projectData } = result;
-            const { format, platform, prefix, suffix, quality } = projectData;
+            const { format, platform, prefix, suffix, quality, scale } =
+                projectData;
 
             const tmps: TmpExport[] = [];
 
@@ -446,7 +451,7 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                                     quality,
                                     buffer: await exportAsync(
                                         tmp.node,
-                                        getExportSetting(_format, 1)
+                                        getExportSetting(_format, scale)
                                     ),
                                 };
                                 exports.push(exportData);

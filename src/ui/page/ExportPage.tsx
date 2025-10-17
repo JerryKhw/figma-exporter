@@ -81,10 +81,12 @@ export const ExportPage = () => {
         onChangePrefix,
         onChangeSuffix,
         onChangeQuality,
+        onChangeScale,
+        onBlurScale,
         onExport,
     } = useAppStore();
 
-    const { format, platform, prefix, suffix, quality } = projectData;
+    const { format, platform, prefix, suffix, quality, scale } = projectData;
 
     const onChangePreviewName = useCallback((id: string, name: string) => {
         updatePreviewName(id, name);
@@ -187,7 +189,9 @@ export const ExportPage = () => {
                                         </div>
                                     </CustomTooltip>
                                 )}
+                            </div>
 
+                            <div className="flex gap-2">
                                 <Select
                                     value={platform}
                                     onValueChange={onChangePlatform}
@@ -210,6 +214,26 @@ export const ExportPage = () => {
                                         ))}
                                     </SelectContent>
                                 </Select>
+
+                                {platform === Platform.WEB &&
+                                    (format === Format.JPG ||
+                                        format === Format.PNG ||
+                                        format === Format.WEBP) && (
+                                        <CustomTooltip content="Set export scale (0.5-4x)">
+                                            <div className="relative w-16">
+                                                <Input
+                                                    placeholder="1"
+                                                    value={scale}
+                                                    onChange={onChangeScale}
+                                                    onBlur={onBlurScale}
+                                                    className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                                                />
+                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
+                                                    x
+                                                </span>
+                                            </div>
+                                        </CustomTooltip>
+                                    )}
                             </div>
 
                             <div className="flex gap-2">

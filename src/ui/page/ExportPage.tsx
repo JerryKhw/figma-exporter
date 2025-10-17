@@ -189,52 +189,103 @@ export const ExportPage = () => {
                                         </div>
                                     </CustomTooltip>
                                 )}
+
+                                {!isDev && (
+                                    <>
+                                        <Select
+                                            value={platform}
+                                            onValueChange={onChangePlatform}
+                                            disabled={platformDisabled}
+                                        >
+                                            <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
+                                                    Platform
+                                                </div>
+                                                {platformList.map((item) => (
+                                                    <SelectItem
+                                                        key={item.value}
+                                                        value={item.value}
+                                                    >
+                                                        {item.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        {platform === Platform.WEB &&
+                                            (format === Format.JPG ||
+                                                format === Format.PNG ||
+                                                format === Format.WEBP) && (
+                                                <CustomTooltip content="Set export scale (0.5-4x)">
+                                                    <div className="relative w-16">
+                                                        <Input
+                                                            placeholder="1"
+                                                            value={scale}
+                                                            onChange={
+                                                                onChangeScale
+                                                            }
+                                                            onBlur={onBlurScale}
+                                                            className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                                                        />
+                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
+                                                            x
+                                                        </span>
+                                                    </div>
+                                                </CustomTooltip>
+                                            )}
+                                    </>
+                                )}
                             </div>
 
-                            <div className="flex gap-2">
-                                <Select
-                                    value={platform}
-                                    onValueChange={onChangePlatform}
-                                    disabled={platformDisabled}
-                                >
-                                    <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                            Platform
-                                        </div>
-                                        {platformList.map((item) => (
-                                            <SelectItem
-                                                key={item.value}
-                                                value={item.value}
-                                            >
-                                                {item.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-
-                                {platform === Platform.WEB &&
-                                    (format === Format.JPG ||
-                                        format === Format.PNG ||
-                                        format === Format.WEBP) && (
-                                        <CustomTooltip content="Set export scale (0.5-4x)">
-                                            <div className="relative w-16">
-                                                <Input
-                                                    placeholder="1"
-                                                    value={scale}
-                                                    onChange={onChangeScale}
-                                                    onBlur={onBlurScale}
-                                                    className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                                                />
-                                                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
-                                                    x
-                                                </span>
+                            {isDev && (
+                                <div className="flex gap-2">
+                                    <Select
+                                        value={platform}
+                                        onValueChange={onChangePlatform}
+                                        disabled={platformDisabled}
+                                    >
+                                        <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
+                                                Platform
                                             </div>
-                                        </CustomTooltip>
-                                    )}
-                            </div>
+                                            {platformList.map((item) => (
+                                                <SelectItem
+                                                    key={item.value}
+                                                    value={item.value}
+                                                >
+                                                    {item.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    {platform === Platform.WEB &&
+                                        (format === Format.JPG ||
+                                            format === Format.PNG ||
+                                            format === Format.WEBP) && (
+                                            <CustomTooltip content="Set export scale (0.5-4x)">
+                                                <div className="relative w-16">
+                                                    <Input
+                                                        placeholder="1"
+                                                        value={scale}
+                                                        onChange={onChangeScale}
+                                                        onBlur={onBlurScale}
+                                                        className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                                                    />
+                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
+                                                        x
+                                                    </span>
+                                                </div>
+                                            </CustomTooltip>
+                                        )}
+                                </div>
+                            )}
 
                             <div className="flex gap-2">
                                 <CustomTooltip content="Add a prefix to all exported file names">

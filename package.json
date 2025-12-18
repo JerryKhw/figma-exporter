@@ -1,5 +1,5 @@
 {
-  "name": "@jerry/figma-exporter",
+  "name": "@jerrykhw/figma-exporter",
   "version": "3.2.2",
   "description": "Figma Exporter",
   "type": "module",

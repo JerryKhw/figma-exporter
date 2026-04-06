@@ -52,7 +52,7 @@ const canvasToBuffer = async (
 };
 
 const decodeBuffer = async (buffer: Uint8Array): Promise<ImageBitmap> => {
-    const blob = new Blob([buffer], { type: "image/png" });
+    const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], { type: "image/png" });
     return await createImageBitmap(blob);
 };
 

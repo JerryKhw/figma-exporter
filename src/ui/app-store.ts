@@ -3,12 +3,14 @@ import { create } from "zustand";
 import type { Platform } from "@common/enum";
 import {
     Format,
+    Language,
     Page,
     PluginMessageType,
     SettingScope,
     UiMessageType,
     Theme,
 } from "@common/enum";
+import { t } from "@common/i18n";
 import type {
     Setting,
     PreviewUi,
@@ -95,15 +97,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
             "(prefers-color-scheme: dark)"
         ).matches;
 
-        let shouldBeDark = false;
-
-        if (setting.theme === Theme.DARK) {
-            shouldBeDark = true;
-        } else if (setting.theme === Theme.LIGHT) {
-            shouldBeDark = false;
-        } else {
-            shouldBeDark = systemDarkMode;
-        }
+        const shouldBeDark =
+            setting.theme === Theme.DARK
+                ? true
+                : setting.theme === Theme.LIGHT
+                  ? false
+                  : systemDarkMode;
 
         if (shouldBeDark) {
             document.documentElement.classList.add("dark");
@@ -118,15 +117,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
             "(prefers-color-scheme: dark)"
         ).matches;
 
-        let shouldBeDark = false;
-
-        if (theme === Theme.DARK) {
-            shouldBeDark = true;
-        } else if (theme === Theme.LIGHT) {
-            shouldBeDark = false;
-        } else {
-            shouldBeDark = systemDarkMode;
-        }
+        const shouldBeDark =
+            theme === Theme.DARK
+                ? true
+                : theme === Theme.LIGHT
+                  ? false
+                  : systemDarkMode;
 
         if (shouldBeDark) {
             document.documentElement.classList.add("dark");
@@ -320,12 +316,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
         const previewNames = previews.map((preview) => preview.name);
 
+        const language = get().setting.language ?? Language.EN;
+
         if (previews.length === 0) {
             parent.postMessage(
                 {
                     pluginMessage: {
                         type: UiMessageType.ERROR,
-                        data: "Please select a layer",
+                        data: t("errorSelectLayer", language),
                     },
                 },
                 "*"
@@ -339,7 +337,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 {
                     pluginMessage: {
                         type: UiMessageType.ERROR,
-                        data: "Please enter image file names",
+                        data: t("errorEnterFileNames", language),
                     },
                 },
                 "*"
@@ -353,7 +351,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 {
                     pluginMessage: {
                         type: UiMessageType.ERROR,
-                        data: "Duplicate image file names found",
+                        data: t("errorDuplicateFileNames", language),
                     },
                 },
                 "*"
@@ -454,9 +452,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     index,
                                     parts.length
                                 );
-                                zipData[
-                                    `${partName}.${exportData.format}`
-                                ] = part;
+                                zipData[`${partName}.${exportData.format}`] =
+                                    part;
                             });
 
                             return;
@@ -526,7 +523,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
                             results.forEach((result) => {
                                 totalOriginalSize += result.originalSize;
                                 totalCompressedSize += result.convertedSize;
-                                if (result.convertedSize < result.originalSize) {
+                                if (
+                                    result.convertedSize < result.originalSize
+                                ) {
                                     compressedImagesCount++;
                                 }
                             });
@@ -539,9 +538,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     index,
                                     totalParts
                                 );
-                                zipData[
-                                    `${partName}.${exportData.format}`
-                                ] = part;
+                                zipData[`${partName}.${exportData.format}`] =
+                                    part;
                             });
                             results[1].parts.forEach((part, index) => {
                                 const partName = buildPartName(
@@ -549,9 +547,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     index,
                                     totalParts
                                 );
-                                zipData[
-                                    `${partName}.${exportData.format}`
-                                ] = part;
+                                zipData[`${partName}.${exportData.format}`] =
+                                    part;
                             });
                             results[2].parts.forEach((part, index) => {
                                 const partName = buildPartName(
@@ -559,9 +556,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     index,
                                     totalParts
                                 );
-                                zipData[
-                                    `${partName}.${exportData.format}`
-                                ] = part;
+                                zipData[`${partName}.${exportData.format}`] =
+                                    part;
                             });
 
                             return;
@@ -886,7 +882,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         }
 
         if (Object.keys(zipData).length === 1) {
-            const blob = new Blob([Object.values(zipData)[0]]);
+            const blob = new Blob([
+                Object.values(zipData)[0] as Uint8Array<ArrayBuffer>,
+            ]);
 
             downloadBlob(
                 blob,
@@ -921,7 +919,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
                     return;
                 }
 
-                const content = new Blob([data], { type: "application/zip" });
+                const content = new Blob([data as Uint8Array<ArrayBuffer>], {
+                    type: "application/zip",
+                });
 
                 if (exportDataLength > 1) {
                     downloadBlob(

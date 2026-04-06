@@ -27,7 +27,7 @@ export const compressImageBuffer = async (
 
     try {
         const mimeType = format === Format.JPG ? "image/jpeg" : "image/png";
-        const blob = new Blob([buffer], { type: mimeType });
+        const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], { type: mimeType });
         const file = new File([blob], `image.${format}`, { type: mimeType });
 
         const compressionOptions = {

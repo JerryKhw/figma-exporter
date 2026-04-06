@@ -61,3 +61,16 @@ export enum Theme {
     DARK = "dark",
     SYSTEM = "system",
 }
+
+export enum Language {
+    EN = "en",
+    JA = "ja",
+    FR = "fr",
+    DE = "de",
+    ES = "es",
+    ES_419 = "es-419",
+    KO = "ko",
+    PT_BR = "pt-BR",
+    ZH_CN = "zh-CN",
+    ZH_TW = "zh-TW",
+}

@@ -3,6 +3,7 @@ import { enums, object, string, validate } from "superstruct";
 import {
     NameCase,
     Format,
+    Language,
     Platform,
     PluginMessageType,
     UiMessageType,
@@ -28,6 +29,7 @@ import {
     ExportOptionSchema,
 } from "@common/interface.js";
 import { getData, ProjectKey, GlobalKey, setData } from "./data.js";
+import { t, tFormat } from "@common/i18n/index.js";
 
 const SVGSetting: ExportSettings = {
     format: "SVG",
@@ -216,8 +218,14 @@ Promise.all([
     if (data2 && typeof data2 === "object" && !("theme" in data2)) {
         data2 = { ...data2, theme: Theme.SYSTEM };
     }
+    if (data2 && typeof data2 === "object" && !("language" in data2)) {
+        data2 = { ...data2, language: Language.EN };
+    }
     if (data3 && typeof data3 === "object" && !("theme" in data3)) {
         data3 = { ...data3, theme: Theme.SYSTEM };
+    }
+    if (data3 && typeof data3 === "object" && !("language" in data3)) {
+        data3 = { ...data3, language: Language.EN };
     }
 
     const [_e1, result1] = validate(data1, ProjectDataSchema);
@@ -314,8 +322,9 @@ figma.ui.onmessage = async (msg: UiMessage) => {
             projectData = exportData.projectData;
 
             const currentSetting = setting || initSetting;
+            const lang = currentSetting.language;
 
-            let successMessage = "Figma Exporter : Success Export";
+            let successMessage = t("notifySuccess", lang);
 
             if (
                 exportData.compressionStats &&
@@ -339,7 +348,11 @@ figma.ui.onmessage = async (msg: UiMessage) => {
 
                 const savedBytes =
                     stats.totalOriginalSize - stats.totalCompressedSize;
-                successMessage += ` | Compressed ${stats.compressedImagesCount} image(s), saved ${formatBytes(savedBytes)} (${compressionPercentage}%)`;
+                successMessage += ` | ${tFormat("notifyCompressed", lang, {
+                    count: stats.compressedImagesCount,
+                    saved: formatBytes(savedBytes),
+                    pct: compressionPercentage,
+                })}`;
             }
 
             if (currentSetting.autoCloseAfterExport) {

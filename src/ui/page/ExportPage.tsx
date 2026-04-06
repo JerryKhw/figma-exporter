@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from "react";
+import { t } from "@common/i18n";
 
 import { Settings } from "lucide-react";
 import { Button } from "@ui/components/ui/button";
@@ -74,7 +75,7 @@ export const ExportPage = () => {
         previews,
         updatePreviewName,
         deletePreview,
-        setting: { viewMode, perRow },
+        setting: { viewMode, perRow, language: lang },
         projectData,
         onChangeFormat,
         onChangePlatform,
@@ -159,7 +160,7 @@ export const ExportPage = () => {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                            Format
+                                            {t("format", lang)}
                                         </div>
                                         {formatList.map((item) => (
                                             <SelectItem
@@ -175,7 +176,7 @@ export const ExportPage = () => {
                                 {(format === Format.JPG ||
                                     format === Format.PNG ||
                                     format === Format.WEBP) && (
-                                    <CustomTooltip content="Set compression quality (1-100%)">
+                                    <CustomTooltip content={t("tooltipQuality", lang)}>
                                         <div className="relative w-16">
                                             <Input
                                                 placeholder="100"
@@ -202,7 +203,7 @@ export const ExportPage = () => {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                                    Platform
+                                                    {t("platform", lang)}
                                                 </div>
                                                 {platformList.map((item) => (
                                                     <SelectItem
@@ -219,7 +220,7 @@ export const ExportPage = () => {
                                             (format === Format.JPG ||
                                                 format === Format.PNG ||
                                                 format === Format.WEBP) && (
-                                                <CustomTooltip content="Set export scale (0.5-4x)">
+                                                <CustomTooltip content={t("tooltipScale", lang)}>
                                                     <div className="relative w-16">
                                                         <Input
                                                             placeholder="1"
@@ -252,7 +253,7 @@ export const ExportPage = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                                Platform
+                                                {t("platform", lang)}
                                             </div>
                                             {platformList.map((item) => (
                                                 <SelectItem
@@ -269,7 +270,7 @@ export const ExportPage = () => {
                                         (format === Format.JPG ||
                                             format === Format.PNG ||
                                             format === Format.WEBP) && (
-                                            <CustomTooltip content="Set export scale (0.5-4x)">
+                                            <CustomTooltip content={t("tooltipScale", lang)}>
                                                 <div className="relative w-16">
                                                     <Input
                                                         placeholder="1"
@@ -288,19 +289,19 @@ export const ExportPage = () => {
                             )}
 
                             <div className="flex gap-2">
-                                <CustomTooltip content="Add a prefix to all exported file names">
+                                <CustomTooltip content={t("tooltipPrefix", lang)}>
                                     <Input
                                         value={prefix}
                                         onChange={onChangePrefix}
-                                        placeholder="Prefix"
+                                        placeholder={t("prefix", lang)}
                                         className="w-20 h-7 text-xs focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                                     />
                                 </CustomTooltip>
-                                <CustomTooltip content="Add a suffix to all exported file names">
+                                <CustomTooltip content={t("tooltipSuffix", lang)}>
                                     <Input
                                         value={suffix}
                                         onChange={onChangeSuffix}
-                                        placeholder="Suffix"
+                                        placeholder={t("suffix", lang)}
                                         className="w-24 h-7 text-xs focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                                     />
                                 </CustomTooltip>
@@ -315,7 +316,7 @@ export const ExportPage = () => {
                                         onClick={onGoSettingsPage}
                                     >
                                         <Settings className="h-3 w-3 mr-1" />
-                                        Settings
+                                        {t("settings", lang)}
                                     </Button>
 
                                     <div className="relative">
@@ -327,8 +328,8 @@ export const ExportPage = () => {
                                                 disabled={isLoading}
                                             >
                                                 {isLoading
-                                                    ? "Exporting..."
-                                                    : "Export"}
+                                                    ? t("exporting", lang)
+                                                    : t("export", lang)}
                                             </Button>
                                         </div>
                                     </div>
@@ -345,7 +346,7 @@ export const ExportPage = () => {
                                     onClick={onGoSettingsPage}
                                 >
                                     <Settings className="h-3 w-3 mr-1" />
-                                    Settings
+                                    {t("settings", lang)}
                                 </Button>
 
                                 <div className="relative">
@@ -357,8 +358,8 @@ export const ExportPage = () => {
                                             disabled={isLoading}
                                         >
                                             {isLoading
-                                                ? "Exporting..."
-                                                : "Export"}
+                                                ? t("exporting", lang)
+                                                : t("export", lang)}
                                         </Button>
                                     </div>
                                 </div>

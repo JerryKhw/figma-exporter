@@ -12,7 +12,8 @@ import {
 } from "lucide-react";
 
 import { useAppStore } from "@ui/app-store";
-import { SettingScope, ViewMode, NameCase, Theme } from "@common/enum";
+import { Language, SettingScope, ViewMode, NameCase, Theme } from "@common/enum";
+import { t } from "@common/i18n";
 import { Button } from "@ui/components/ui/button";
 import { Input } from "@ui/components/ui/input";
 import { ToggleSwitch } from "@ui/components/custom/ToggleSwitch";
@@ -37,11 +38,13 @@ export const SettingsPage = () => {
     } = useAppStore();
 
     const { settingScope } = projectData;
+    const lang = (settingScope === SettingScope.GLOBAL ? globalSetting : projectSetting).language ?? Language.EN;
 
     const [tmpSettingScope, setTmpSettingScope] = useState(settingScope);
     const [tmpSetting, setTmpSetting] = useState(
         settingScope === SettingScope.GLOBAL ? globalSetting : projectSetting
     );
+    const tmpLang = tmpSetting.language ?? Language.EN;
 
     useEffect(() => {
         setTmpSetting(
@@ -123,7 +126,7 @@ export const SettingsPage = () => {
             <div className="size-full bg-white dark:bg-[#3A3A3A] flex flex-col relative transition-colors duration-200">
                 <div className="p-4 pb-2">
                     <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100 text-center">
-                        Settings
+                        {t("settingsTitle", tmpLang)}
                     </h1>
                 </div>
 
@@ -133,18 +136,12 @@ export const SettingsPage = () => {
                             {tmpSettingScope === SettingScope.GLOBAL ? (
                                 <>
                                     <Globe className="size-3" />
-                                    <span>
-                                        Configuring global settings for all
-                                        projects
-                                    </span>
+                                    <span>{t("configuringGlobal", tmpLang)}</span>
                                 </>
                             ) : (
                                 <>
                                     <FolderOpen className="size-3" />
-                                    <span>
-                                        Configuring settings for this project
-                                        only
-                                    </span>
+                                    <span>{t("configuringProject", tmpLang)}</span>
                                 </>
                             )}
                         </div>
@@ -153,7 +150,7 @@ export const SettingsPage = () => {
                     {/* Theme Settings */}
                     <div className="mb-4">
                         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Appearance
+                            {t("appearance", tmpLang)}
                         </h2>
                         <div className="flex gap-4 text-xs">
                             <label className="flex items-center">
@@ -174,7 +171,7 @@ export const SettingsPage = () => {
                                 />
                                 <Sun className="w-3 h-3 mr-1" />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    Light
+                                    {t("light", tmpLang)}
                                 </span>
                             </label>
                             <label className="flex items-center">
@@ -195,7 +192,7 @@ export const SettingsPage = () => {
                                 />
                                 <Moon className="w-3 h-3 mr-1" />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    Dark
+                                    {t("dark", tmpLang)}
                                 </span>
                             </label>
                             <label className="flex items-center">
@@ -216,15 +213,47 @@ export const SettingsPage = () => {
                                 />
                                 <Monitor className="w-3 h-3 mr-1" />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    System
+                                    {t("system", tmpLang)}
                                 </span>
                             </label>
                         </div>
                     </div>
 
+                    {/* Language Settings */}
                     <div className="mb-4">
                         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Layout Settings
+                            {t("language", tmpLang)}
+                        </h2>
+                        <Select
+                            value={tmpSetting.language}
+                            onValueChange={(value) =>
+                                setTmpSetting((prev) => ({
+                                    ...prev,
+                                    language: value as Language,
+                                }))
+                            }
+                        >
+                            <SelectTrigger className="w-48 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value={Language.EN}>English</SelectItem>
+                                <SelectItem value={Language.JA}>日本語</SelectItem>
+                                <SelectItem value={Language.FR}>Français</SelectItem>
+                                <SelectItem value={Language.DE}>Deutsch</SelectItem>
+                                <SelectItem value={Language.ES}>Español (España)</SelectItem>
+                                <SelectItem value={Language.ES_419}>Español (Latinoamérica)</SelectItem>
+                                <SelectItem value={Language.KO}>한국어</SelectItem>
+                                <SelectItem value={Language.PT_BR}>Português (Brasil)</SelectItem>
+                                <SelectItem value={Language.ZH_CN}>简体中文</SelectItem>
+                                <SelectItem value={Language.ZH_TW}>繁體中文</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="mb-4">
+                        <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {t("layoutSettings", tmpLang)}
                         </h2>
                         <div className="space-y-2">
                             <div className="flex gap-4 text-xs">
@@ -247,7 +276,7 @@ export const SettingsPage = () => {
                                         className="mr-2 w-3 h-3"
                                     />
                                     <span className="text-gray-700 dark:text-gray-300">
-                                        Grid View
+                                        {t("gridView", tmpLang)}
                                     </span>
                                 </label>
                                 <label className="flex items-center">
@@ -269,7 +298,7 @@ export const SettingsPage = () => {
                                         className="mr-2 w-3 h-3"
                                     />
                                     <span className="text-gray-700 dark:text-gray-300">
-                                        List View
+                                        {t("listView", tmpLang)}
                                     </span>
                                 </label>
                             </div>
@@ -277,7 +306,7 @@ export const SettingsPage = () => {
                             {tmpSetting.viewMode === ViewMode.GRID && (
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs text-gray-700 dark:text-gray-300">
-                                        Items per row:
+                                        {t("itemsPerRow", tmpLang)}
                                     </span>
                                     <Select
                                         value={tmpSetting.perRow.toString()}
@@ -292,11 +321,9 @@ export const SettingsPage = () => {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="2">2</SelectItem>
-                                            <SelectItem value="3">3</SelectItem>
-                                            <SelectItem value="4">4</SelectItem>
-                                            <SelectItem value="5">5</SelectItem>
-                                            <SelectItem value="6">6</SelectItem>
+                                            {Array.from({ length: 19 }, (_, i) => i + 2).map((n) => (
+                                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -306,12 +333,12 @@ export const SettingsPage = () => {
 
                     <div className="mb-4">
                         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Actions
+                            {t("actions", tmpLang)}
                         </h2>
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-700 dark:text-gray-300">
-                                    Auto-close after export
+                                    {t("autoCloseAfterExport", tmpLang)}
                                 </span>
                                 <ToggleSwitch
                                     checked={tmpSetting.autoCloseAfterExport}
@@ -325,7 +352,7 @@ export const SettingsPage = () => {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-700 dark:text-gray-300">
-                                    Reload preview on selection change
+                                    {t("reloadPreviewOnSelectionChange", tmpLang)}
                                 </span>
                                 <ToggleSwitch
                                     checked={
@@ -342,7 +369,7 @@ export const SettingsPage = () => {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-700 dark:text-gray-300">
-                                    Force compression at 100% quality
+                                    {t("forceCompressionAt100Quality", tmpLang)}
                                 </span>
                                 <ToggleSwitch
                                     checked={
@@ -362,7 +389,7 @@ export const SettingsPage = () => {
 
                     <div className="mb-4">
                         <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Preview Name Case
+                            {t("previewNameCase", tmpLang)}
                         </h2>
                         <div className="flex gap-4 text-xs">
                             <label className="flex items-center">
@@ -384,7 +411,7 @@ export const SettingsPage = () => {
                                     className="mr-2 w-3 h-3"
                                 />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    Original
+                                    {t("original", tmpLang)}
                                 </span>
                             </label>
                             <label className="flex items-center">
@@ -406,7 +433,7 @@ export const SettingsPage = () => {
                                     className="mr-2 w-3 h-3"
                                 />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    Lowercase
+                                    {t("lowercase", tmpLang)}
                                 </span>
                             </label>
                             <label className="flex items-center">
@@ -428,7 +455,7 @@ export const SettingsPage = () => {
                                     className="mr-2 w-3 h-3"
                                 />
                                 <span className="text-gray-700 dark:text-gray-300">
-                                    Uppercase
+                                    {t("uppercase", tmpLang)}
                                 </span>
                             </label>
                         </div>
@@ -437,7 +464,7 @@ export const SettingsPage = () => {
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Preview Name Cleanup Rules
+                                {t("previewNameCleanupRules", tmpLang)}
                             </h2>
                             <Button
                                 onClick={addPreviewReplacement}
@@ -446,7 +473,7 @@ export const SettingsPage = () => {
                                 className="h-6 px-2 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                             >
                                 <Plus className="w-3 h-3 mr-1" />
-                                Add Rule
+                                {t("addRule", tmpLang)}
                             </Button>
                         </div>
                         <div className="space-y-2">
@@ -457,7 +484,7 @@ export const SettingsPage = () => {
                                         className="flex items-center gap-2"
                                     >
                                         <Input
-                                            placeholder="Find"
+                                            placeholder={t("find", tmpLang)}
                                             value={rule.original}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({
@@ -483,7 +510,7 @@ export const SettingsPage = () => {
                                             →
                                         </span>
                                         <Input
-                                            placeholder="Replace with"
+                                            placeholder={t("replaceWith", tmpLang)}
                                             value={rule.replacement}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({
@@ -524,7 +551,7 @@ export const SettingsPage = () => {
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Export Name Cleanup Rules
+                                {t("exportNameCleanupRules", tmpLang)}
                             </h2>
                             <Button
                                 onClick={addExportReplacement}
@@ -533,7 +560,7 @@ export const SettingsPage = () => {
                                 className="h-6 px-2 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                             >
                                 <Plus className="w-3 h-3 mr-1" />
-                                Add Rule
+                                {t("addRule", tmpLang)}
                             </Button>
                         </div>
                         <div className="space-y-2">
@@ -544,7 +571,7 @@ export const SettingsPage = () => {
                                         className="flex items-center gap-2"
                                     >
                                         <Input
-                                            placeholder="Find"
+                                            placeholder={t("find", tmpLang)}
                                             value={rule.original}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({
@@ -570,7 +597,7 @@ export const SettingsPage = () => {
                                             →
                                         </span>
                                         <Input
-                                            placeholder="Replace with"
+                                            placeholder={t("replaceWith", tmpLang)}
                                             value={rule.replacement}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({
@@ -616,13 +643,14 @@ export const SettingsPage = () => {
                             className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-amber-600 transition-colors duration-200 group"
                         >
                             <Coffee className="w-3.5 h-3.5 text-amber-500 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
-                            <span>Support Us</span>
+                            <span>{t("supportUs", tmpLang)}</span>
                         </button>
 
                         <div className="flex items-center gap-3">
                             <SettingsScopeToggle
                                 value={tmpSettingScope}
                                 onChange={onChangeTmpSettingScope}
+                                lang={tmpLang}
                             />
 
                             {!isDev && (
@@ -633,14 +661,14 @@ export const SettingsPage = () => {
                                         size="sm"
                                         className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                                     >
-                                        Cancel
+                                        {t("cancel", tmpLang)}
                                     </Button>
                                     <Button
                                         onClick={onSave}
                                         size="sm"
                                         className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
                                     >
-                                        Save
+                                        {t("save", tmpLang)}
                                     </Button>
                                 </div>
                             )}
@@ -655,14 +683,14 @@ export const SettingsPage = () => {
                                 size="sm"
                                 className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
                             >
-                                Cancel
+                                {t("cancel", tmpLang)}
                             </Button>
                             <Button
                                 onClick={onSave}
                                 size="sm"
                                 className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
                             >
-                                Save
+                                {t("save", tmpLang)}
                             </Button>
                         </div>
                     )}
@@ -677,9 +705,11 @@ export const SettingsPage = () => {
 const SettingsScopeToggle = ({
     value,
     onChange,
+    lang,
 }: {
     value: SettingScope;
     onChange: (value: SettingScope) => void;
+    lang: Language;
 }) => {
     const isGlobal = value === SettingScope.GLOBAL;
 
@@ -692,7 +722,7 @@ const SettingsScopeToggle = ({
                 <span
                     className={`text-xs ${!isGlobal ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-500 dark:text-gray-400"}`}
                 >
-                    Project
+                    {t("project", lang)}
                 </span>
             </div>
 
@@ -726,7 +756,7 @@ const SettingsScopeToggle = ({
                 <span
                     className={`text-xs ${isGlobal ? "text-gray-900 dark:text-gray-100 font-medium" : "text-gray-500 dark:text-gray-400"}`}
                 >
-                    Global
+                    {t("global", lang)}
                 </span>
             </div>
         </div>

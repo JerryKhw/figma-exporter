@@ -52,7 +52,7 @@
     "fflate": "^0.8.2",
     "globals": "^17.4.0",
     "lucide-react": "^0.576.0",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.10",
     "preact": "^10.29.0",
     "prettier": "^3.8.1",
     "react": "npm:@preact/compat@^18.3.2",

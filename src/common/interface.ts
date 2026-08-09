@@ -17,7 +17,15 @@ const Uint8ArrayStruct = define<Uint8Array>("Uint8Array", (value) => {
 });
 
 import type { PluginMessageType, UiMessageType } from "./enum.js";
-import { NameCase, Format, Platform, ViewMode, SettingScope, Theme, Language } from "./enum.js";
+import {
+    NameCase,
+    Format,
+    Platform,
+    ViewMode,
+    SettingScope,
+    Theme,
+    Language,
+} from "./enum.js";
 
 export interface PluginMessage {
     type: PluginMessageType;

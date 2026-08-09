@@ -52,6 +52,7 @@ export const de = {
     errorSelectLayer: "Bitte einen Layer auswählen",
     errorEnterFileNames: "Bitte Bilddateinamen eingeben",
     errorDuplicateFileNames: "Doppelte Bilddateinamen gefunden",
+    errorExportFailed: "Export fehlgeschlagen. Bitte erneut versuchen.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : Export erfolgreich",

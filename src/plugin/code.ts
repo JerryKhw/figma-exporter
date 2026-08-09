@@ -52,13 +52,21 @@ const getExportSetting = (
     };
 };
 
-const sleep = (ms: number) => {
-    return new Promise((r) => setTimeout(r, ms));
+const safeReplace = (
+    input: string,
+    pattern: string,
+    replacement: string
+): string => {
+    try {
+        return input.replace(new RegExp(pattern, "g"), replacement);
+    } catch {
+        // Invalid regex (e.g. user typed a literal "(" or "["): treat as no-op
+        return input;
+    }
 };
 
 class ApiQueue {
     private queue: Array<() => Promise<any>> = [];
-    private processing = false;
     private maxConcurrency = 3;
     private activePromises = 0;
     private minDelay = 30;
@@ -77,13 +85,7 @@ class ApiQueue {
         });
     }
 
-    private async process() {
-        if (this.processing || this.activePromises >= this.maxConcurrency) {
-            return;
-        }
-
-        this.processing = true;
-
+    private process() {
         while (
             this.queue.length > 0 &&
             this.activePromises < this.maxConcurrency
@@ -97,8 +99,6 @@ class ApiQueue {
                 });
             }
         }
-
-        this.processing = false;
     }
 }
 
@@ -119,6 +119,11 @@ interface TmpExport {
 let projectData: ProjectData | undefined = undefined;
 let setting: Setting | undefined = undefined;
 
+let resolveSettingReady: () => void;
+const settingReady = new Promise<void>((resolve) => {
+    resolveSettingReady = resolve;
+});
+
 const getPreview = async (
     setting: Setting,
     node: SceneNode
@@ -135,7 +140,7 @@ const getPreview = async (
     }
 
     setting.previewNameCleanupRules.forEach((data) => {
-        name = name.replace(new RegExp(data.original, "g"), data.replacement);
+        name = safeReplace(name, data.original, data.replacement);
     });
 
     return {
@@ -167,6 +172,7 @@ if (isDev) {
 }
 
 let selectionChangeTimeout: number | null = null;
+let resizeSaveTimeout: number | null = null;
 
 figma.on("selectionchange", async () => {
     if (selectionChangeTimeout) {
@@ -174,12 +180,8 @@ figma.on("selectionchange", async () => {
     }
 
     selectionChangeTimeout = setTimeout(async () => {
-        let notUndefinedSetting = setting;
-
-        while (notUndefinedSetting === undefined) {
-            await sleep(10);
-            notUndefinedSetting = setting;
-        }
+        await settingReady;
+        const notUndefinedSetting = setting!;
 
         if (!notUndefinedSetting.reloadPreviewOnSelectionChange) {
             return;
@@ -252,6 +254,7 @@ Promise.all([
             : globalSetting;
 
     setting = currentSetting;
+    resolveSettingReady();
 
     const selection = figma.currentPage.selection;
     const previews: Preview[] = [];
@@ -288,8 +291,14 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                 return;
             }
 
-            setData(GlobalKey.SIZE, data);
             figma.ui.resize(data.w, data.h);
+
+            if (resizeSaveTimeout) {
+                clearTimeout(resizeSaveTimeout);
+            }
+            resizeSaveTimeout = setTimeout(() => {
+                setData(GlobalKey.SIZE, data);
+            }, 200);
             break;
         }
         case UiMessageType.ERROR: {
@@ -429,9 +438,8 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                 case Format.SVG:
                 case Format.PDF: {
                     const isSVG = format === Format.SVG;
-                    const exports: ExportDefault[] = [];
-                    for (const tmp of tmps) {
-                        const exportData = {
+                    const exports: ExportDefault[] = await Promise.all(
+                        tmps.map(async (tmp) => ({
                             name: tmp.name,
                             format: format,
                             quality,
@@ -439,9 +447,8 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                                 tmp.node,
                                 isSVG ? SVGSetting : PDFSetting
                             ),
-                        };
-                        exports.push(exportData);
-                    }
+                        }))
+                    );
                     figma.ui.postMessage({
                         type: isSVG
                             ? PluginMessageType.EXPORT_SVG
@@ -456,9 +463,8 @@ figma.ui.onmessage = async (msg: UiMessage) => {
 
                     switch (platform) {
                         case Platform.WEB: {
-                            const exports: ExportDefault[] = [];
-                            for (const tmp of tmps) {
-                                const exportData = {
+                            const exports: ExportDefault[] = await Promise.all(
+                                tmps.map(async (tmp) => ({
                                     name: tmp.name,
                                     format,
                                     quality,
@@ -466,9 +472,8 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                                         tmp.node,
                                         getExportSetting(_format, scale)
                                     ),
-                                };
-                                exports.push(exportData);
-                            }
+                                }))
+                            );
                             figma.ui.postMessage({
                                 type: PluginMessageType.EXPORT_WEB,
                                 data: exports,
@@ -477,35 +482,48 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                         }
                         case Platform.ANDROID:
                         case Platform.FLUTTER: {
-                            const exports: ExportScale5[] = [];
-                            for (const tmp of tmps) {
-                                const exportData = {
-                                    name: tmp.name,
-                                    format,
-                                    quality,
-                                    scale1: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 1)
-                                    ),
-                                    scale1_5: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 1.5)
-                                    ),
-                                    scale2: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 2)
-                                    ),
-                                    scale3: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 3)
-                                    ),
-                                    scale4: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 4)
-                                    ),
-                                };
-                                exports.push(exportData);
-                            }
+                            const exports: ExportScale5[] = await Promise.all(
+                                tmps.map(async (tmp) => {
+                                    const [
+                                        scale1,
+                                        scale1_5,
+                                        scale2,
+                                        scale3,
+                                        scale4,
+                                    ] = await Promise.all([
+                                        exportAsync(
+                                            tmp.node,
+                                            getExportSetting(_format, 1)
+                                        ),
+                                        exportAsync(
+                                            tmp.node,
+                                            getExportSetting(_format, 1.5)
+                                        ),
+                                        exportAsync(
+                                            tmp.node,
+                                            getExportSetting(_format, 2)
+                                        ),
+                                        exportAsync(
+                                            tmp.node,
+                                            getExportSetting(_format, 3)
+                                        ),
+                                        exportAsync(
+                                            tmp.node,
+                                            getExportSetting(_format, 4)
+                                        ),
+                                    ]);
+                                    return {
+                                        name: tmp.name,
+                                        format,
+                                        quality,
+                                        scale1,
+                                        scale1_5,
+                                        scale2,
+                                        scale3,
+                                        scale4,
+                                    };
+                                })
+                            );
 
                             switch (platform) {
                                 case Platform.ANDROID: {
@@ -527,27 +545,33 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                         }
                         case Platform.iOS:
                         case Platform.RN: {
-                            const exports: ExportScale3[] = [];
-                            for (const tmp of tmps) {
-                                const exportData = {
-                                    name: tmp.name,
-                                    format,
-                                    quality,
-                                    scale1: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 1)
-                                    ),
-                                    scale2: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 2)
-                                    ),
-                                    scale3: await exportAsync(
-                                        tmp.node,
-                                        getExportSetting(_format, 3)
-                                    ),
-                                };
-                                exports.push(exportData);
-                            }
+                            const exports: ExportScale3[] = await Promise.all(
+                                tmps.map(async (tmp) => {
+                                    const [scale1, scale2, scale3] =
+                                        await Promise.all([
+                                            exportAsync(
+                                                tmp.node,
+                                                getExportSetting(_format, 1)
+                                            ),
+                                            exportAsync(
+                                                tmp.node,
+                                                getExportSetting(_format, 2)
+                                            ),
+                                            exportAsync(
+                                                tmp.node,
+                                                getExportSetting(_format, 3)
+                                            ),
+                                        ]);
+                                    return {
+                                        name: tmp.name,
+                                        format,
+                                        quality,
+                                        scale1,
+                                        scale2,
+                                        scale3,
+                                    };
+                                })
+                            );
 
                             switch (platform) {
                                 case Platform.iOS: {

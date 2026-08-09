@@ -48,6 +48,7 @@ const _en = {
     errorSelectLayer: "Please select a layer",
     errorEnterFileNames: "Please enter image file names",
     errorDuplicateFileNames: "Duplicate image file names found",
+    errorExportFailed: "Export failed. Please try again.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : Success Export",

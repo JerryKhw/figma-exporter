@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import { X } from "lucide-react";
 import { Input } from "@ui/components/ui/input";
@@ -11,12 +11,35 @@ export const PreviewItem = ({
     preview,
     onChange,
     onDelete,
+    shouldFocus = false,
+    onFocused,
+    invalidColorClass,
 }: {
     viewMode: ViewMode;
     preview: PreviewUi;
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDelete: () => void;
+    shouldFocus?: boolean;
+    onFocused?: () => void;
+    invalidColorClass?: string;
 }) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!shouldFocus) {
+            return;
+        }
+
+        const input = inputRef.current;
+        if (input) {
+            input.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            input.focus();
+            input.select();
+        }
+
+        onFocused?.();
+    }, [shouldFocus]);
+
     return (
         <div
             key={preview.id}
@@ -63,14 +86,18 @@ export const PreviewItem = ({
                 />
             </div>
             <Input
+                ref={inputRef}
                 placeholder="name"
                 value={preview.name}
                 onChange={onChange}
+                aria-invalid={!!invalidColorClass}
                 className={`h-7 text-xs ${
                     viewMode === ViewMode.LIST
                         ? "flex-1 text-left"
                         : "text-center w-full"
-                } border-gray-200 focus:outline-hidden focus:ring-0 focus:border-gray-400`}
+                } focus:outline-hidden focus:ring-0 ${
+                    invalidColorClass ?? "border-gray-200 focus:border-gray-400"
+                }`}
             />
         </div>
     );

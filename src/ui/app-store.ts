@@ -34,7 +34,11 @@ import {
     convertBuffersToWebPWithConsistentGrid,
     buildPartName,
 } from "./lib/webp-split";
-import { downloadBlob } from "./lib/utils";
+import {
+    applyCleanupRules,
+    buildExportFileName,
+    downloadBlob,
+} from "./lib/utils";
 import { zip } from "fflate";
 
 type AppStore = {
@@ -48,6 +52,9 @@ type AppStore = {
     setPreviews: (preview: PreviewUi[]) => void;
     updatePreviewName: (id: string, name: string) => void;
     deletePreview: (id: string) => void;
+    focusPreviewId: string | null;
+    setFocusPreviewId: (id: string | null) => void;
+    validationActive: boolean;
     setting: Setting;
     globalSetting: Setting;
     projectSetting: Setting;
@@ -92,25 +99,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     currentTheme: Theme.SYSTEM,
     isDarkMode: false,
     initializeTheme: () => {
-        const { setting } = get();
-        const systemDarkMode = window.matchMedia(
-            "(prefers-color-scheme: dark)"
-        ).matches;
-
-        const shouldBeDark =
-            setting.theme === Theme.DARK
-                ? true
-                : setting.theme === Theme.LIGHT
-                  ? false
-                  : systemDarkMode;
-
-        if (shouldBeDark) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
-        }
-
-        set({ currentTheme: setting.theme, isDarkMode: shouldBeDark });
+        get().applyTheme(get().setting.theme);
     },
     applyTheme: (theme: Theme) => {
         const systemDarkMode = window.matchMedia(
@@ -204,6 +193,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
         set((state) => ({
             previews: state.previews.filter((preview) => preview.id !== id),
         })),
+    focusPreviewId: null,
+    setFocusPreviewId: (id) => set({ focusPreviewId: id }),
+    validationActive: false,
     setting: initSetting,
     globalSetting: initSetting,
     projectSetting: initSetting,
@@ -237,9 +229,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
             },
         })),
     onChangeQuality: (event) => {
+        const parsed = parseInt(event.target.value);
         const quality = Math.max(
             1,
-            Math.min(100, parseInt(event.target.value) || 100)
+            Math.min(100, isNaN(parsed) ? 100 : parsed)
         );
         set((state) => ({
             projectData: {
@@ -299,24 +292,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
             }));
         }
     },
-    _sanitizeExportName: (setting, name) => {
-        let tmpExportName = name;
-
-        setting.exportNameCleanupRules.forEach((data) => {
-            tmpExportName = tmpExportName.replace(
-                new RegExp(data.original, "g"),
-                data.replacement
-            );
-        });
-
-        return tmpExportName;
-    },
+    _sanitizeExportName: (setting, name) =>
+        applyCleanupRules(name, setting.exportNameCleanupRules),
     onExport: () => {
-        const { previews, projectData } = get();
+        const { previews, projectData, setting } = get();
 
-        const previewNames = previews.map((preview) => preview.name);
+        const fileNameOf = (name: string) =>
+            buildExportFileName(
+                name,
+                projectData.prefix,
+                projectData.suffix,
+                setting.exportNameCleanupRules
+            );
 
-        const language = get().setting.language ?? Language.EN;
+        const language = setting.language ?? Language.EN;
 
         if (previews.length === 0) {
             parent.postMessage(
@@ -332,7 +321,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        if (previews.filter((preview) => preview.name === "").length > 0) {
+        // Validate the actual output filename (prefix/suffix + cleanup rules
+        // applied), so names that reduce to "" (e.g. "-" or " ") are caught.
+        const emptyIds = previews
+            .filter((preview) => fileNameOf(preview.name) === "")
+            .map((preview) => preview.id);
+        if (emptyIds.length > 0) {
+            set({ validationActive: true, focusPreviewId: emptyIds[0] });
             parent.postMessage(
                 {
                     pluginMessage: {
@@ -346,7 +341,23 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        if (previewNames.length != new Set(previewNames).size) {
+        const fileNames = previews.map((preview) => fileNameOf(preview.name));
+        if (fileNames.length != new Set(fileNames).size) {
+            const nameCounts = fileNames.reduce(
+                (counts, name) => counts.set(name, (counts.get(name) ?? 0) + 1),
+                new Map<string, number>()
+            );
+            const duplicateIds = previews
+                .filter(
+                    (preview) =>
+                        (nameCounts.get(fileNameOf(preview.name)) ?? 0) > 1
+                )
+                .map((preview) => preview.id);
+
+            set({
+                validationActive: true,
+                focusPreviewId: duplicateIds[0] ?? null,
+            });
             parent.postMessage(
                 {
                     pluginMessage: {
@@ -376,7 +387,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             scale: normalizedScale,
         };
 
-        set({ isLoading: true });
+        set({ isLoading: true, validationActive: false });
 
         parent.postMessage(
             {
@@ -397,234 +408,125 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return _sanitizeExportName(setting, name);
         };
 
-        const zipData: Record<string, Uint8Array> = {};
+        const notifyExportFailed = () => {
+            set({ isLoading: false });
+            parent.postMessage(
+                {
+                    pluginMessage: {
+                        type: UiMessageType.ERROR,
+                        data: t(
+                            "errorExportFailed",
+                            setting.language ?? Language.EN
+                        ),
+                    },
+                },
+                "*"
+            );
+        };
 
-        let totalOriginalSize = 0;
-        let totalCompressedSize = 0;
-        let compressedImagesCount = 0;
+        try {
+            const zipData: Record<string, Uint8Array> = {};
 
-        let exportDataLength: number | undefined;
-        let firstExportData:
-            | {
-                  name: string;
-                  format: Format;
-              }
-            | undefined = undefined;
+            let totalOriginalSize = 0;
+            let totalCompressedSize = 0;
+            let compressedImagesCount = 0;
 
-        switch (schema) {
-            case ExportDefaultSchema: {
-                const [_, result] = validate(data, array(schema));
+            const compressAndTrack = async (
+                buffer: Uint8Array,
+                format: Format
+            ): Promise<Uint8Array> => {
+                const result = await compressImageBufferWithStats(buffer, {
+                    quality: projectData.quality,
+                    format,
+                    forceCompressionAt100Quality:
+                        setting.forceCompressionAt100Quality,
+                });
 
-                if (result === undefined || result.length <= 0) {
-                    break;
+                totalOriginalSize += result.originalSize;
+                totalCompressedSize += result.compressedSize;
+                if (result.wasCompressed) {
+                    compressedImagesCount++;
                 }
 
-                exportDataLength = result.length;
-                firstExportData = {
-                    name: result[0].name,
-                    format: result[0].format,
-                };
+                return result.buffer;
+            };
 
-                await Promise.all(
-                    result.map(async (exportData) => {
-                        const exportName = sanitizeExportName(exportData.name);
+            let exportDataLength: number | undefined;
+            let firstExportData:
+                | {
+                      name: string;
+                      format: Format;
+                  }
+                | undefined = undefined;
 
-                        let u8: Uint8Array;
+            switch (schema) {
+                case ExportDefaultSchema: {
+                    const [_, result] = validate(data, array(schema));
 
-                        if (exportData.format === Format.WEBP) {
-                            const { results } =
-                                await convertBuffersToWebPWithConsistentGrid(
-                                    [exportData.buffer],
-                                    projectData.quality
-                                );
-                            const { parts, originalSize, convertedSize } =
-                                results[0];
+                    if (result === undefined || result.length <= 0) {
+                        break;
+                    }
 
-                            totalOriginalSize += originalSize;
-                            totalCompressedSize += convertedSize;
-                            if (convertedSize < originalSize) {
-                                compressedImagesCount++;
-                            }
+                    exportDataLength = result.length;
+                    firstExportData = {
+                        name: result[0].name,
+                        format: result[0].format,
+                    };
 
-                            parts.forEach((part, index) => {
-                                const partName = buildPartName(
-                                    exportName,
-                                    index,
-                                    parts.length
-                                );
-                                zipData[`${partName}.${exportData.format}`] =
-                                    part;
-                            });
+                    await Promise.all(
+                        result.map(async (exportData) => {
+                            const exportName = sanitizeExportName(
+                                exportData.name
+                            );
 
-                            return;
-                        } else if (
-                            exportData.format === Format.JPG ||
-                            exportData.format === Format.PNG
-                        ) {
-                            const compressionResult =
-                                await compressImageBufferWithStats(
-                                    exportData.buffer,
-                                    {
-                                        quality: projectData.quality,
-                                        format: exportData.format,
-                                        forceCompressionAt100Quality:
-                                            setting.forceCompressionAt100Quality,
-                                    }
-                                );
-                            u8 = compressionResult.buffer;
-                            totalOriginalSize += compressionResult.originalSize;
-                            totalCompressedSize +=
-                                compressionResult.compressedSize;
-                            if (compressionResult.wasCompressed) {
-                                compressedImagesCount++;
-                            }
-                        } else {
-                            u8 = exportData.buffer;
-                        }
+                            let u8: Uint8Array;
 
-                        zipData[`${exportName}.${exportData.format}`] = u8;
-                    })
-                );
+                            if (exportData.format === Format.WEBP) {
+                                const { results } =
+                                    await convertBuffersToWebPWithConsistentGrid(
+                                        [exportData.buffer],
+                                        projectData.quality
+                                    );
+                                const { parts, originalSize, convertedSize } =
+                                    results[0];
 
-                break;
-            }
-            case ExportScale3Schema: {
-                const [_, result] = validate(data, array(schema));
-
-                if (result === undefined || result.length <= 0) {
-                    break;
-                }
-
-                exportDataLength = result.length;
-                firstExportData = {
-                    name: result[0].name,
-                    format: result[0].format,
-                };
-
-                await Promise.all(
-                    result.map(async (exportData) => {
-                        const exportName = sanitizeExportName(exportData.name);
-
-                        let scale1: Uint8Array,
-                            scale2: Uint8Array,
-                            scale3: Uint8Array;
-
-                        if (exportData.format === Format.WEBP) {
-                            const { results } =
-                                await convertBuffersToWebPWithConsistentGrid(
-                                    [
-                                        exportData.scale1,
-                                        exportData.scale2,
-                                        exportData.scale3,
-                                    ],
-                                    projectData.quality
-                                );
-
-                            results.forEach((result) => {
-                                totalOriginalSize += result.originalSize;
-                                totalCompressedSize += result.convertedSize;
-                                if (
-                                    result.convertedSize < result.originalSize
-                                ) {
+                                totalOriginalSize += originalSize;
+                                totalCompressedSize += convertedSize;
+                                if (convertedSize < originalSize) {
                                     compressedImagesCount++;
                                 }
-                            });
 
-                            const totalParts = results[0].parts.length;
+                                parts.forEach((part, index) => {
+                                    const partName = buildPartName(
+                                        exportName,
+                                        index,
+                                        parts.length
+                                    );
+                                    zipData[
+                                        `${partName}.${exportData.format}`
+                                    ] = part;
+                                });
 
-                            results[0].parts.forEach((part, index) => {
-                                const partName = buildPartName(
-                                    exportName,
-                                    index,
-                                    totalParts
+                                return;
+                            } else if (
+                                exportData.format === Format.JPG ||
+                                exportData.format === Format.PNG
+                            ) {
+                                u8 = await compressAndTrack(
+                                    exportData.buffer,
+                                    exportData.format
                                 );
-                                zipData[`${partName}.${exportData.format}`] =
-                                    part;
-                            });
-                            results[1].parts.forEach((part, index) => {
-                                const partName = buildPartName(
-                                    `${exportName}@2x`,
-                                    index,
-                                    totalParts
-                                );
-                                zipData[`${partName}.${exportData.format}`] =
-                                    part;
-                            });
-                            results[2].parts.forEach((part, index) => {
-                                const partName = buildPartName(
-                                    `${exportName}@3x`,
-                                    index,
-                                    totalParts
-                                );
-                                zipData[`${partName}.${exportData.format}`] =
-                                    part;
-                            });
+                            } else {
+                                u8 = exportData.buffer;
+                            }
 
-                            return;
-                        } else if (
-                            exportData.format === Format.JPG ||
-                            exportData.format === Format.PNG
-                        ) {
-                            const result1 = await compressImageBufferWithStats(
-                                exportData.scale1,
-                                {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality:
-                                        setting.forceCompressionAt100Quality,
-                                }
-                            );
-                            const result2 = await compressImageBufferWithStats(
-                                exportData.scale2,
-                                {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality:
-                                        setting.forceCompressionAt100Quality,
-                                }
-                            );
-                            const result3 = await compressImageBufferWithStats(
-                                exportData.scale3,
-                                {
-                                    quality: projectData.quality,
-                                    format: exportData.format,
-                                    forceCompressionAt100Quality:
-                                        setting.forceCompressionAt100Quality,
-                                }
-                            );
-                            scale1 = result1.buffer;
-                            scale2 = result2.buffer;
-                            scale3 = result3.buffer;
-                            totalOriginalSize +=
-                                result1.originalSize +
-                                result2.originalSize +
-                                result3.originalSize;
-                            totalCompressedSize +=
-                                result1.compressedSize +
-                                result2.compressedSize +
-                                result3.compressedSize;
-                            let scaleCompressionCount = 0;
-                            if (result1.wasCompressed) scaleCompressionCount++;
-                            if (result2.wasCompressed) scaleCompressionCount++;
-                            if (result3.wasCompressed) scaleCompressionCount++;
-                            compressedImagesCount += scaleCompressionCount;
-                        } else {
-                            scale1 = exportData.scale1;
-                            scale2 = exportData.scale2;
-                            scale3 = exportData.scale3;
-                        }
+                            zipData[`${exportName}.${exportData.format}`] = u8;
+                        })
+                    );
 
-                        zipData[`${exportName}.${exportData.format}`] = scale1;
-                        zipData[`${exportName}@2x.${exportData.format}`] =
-                            scale2;
-                        zipData[`${exportName}@3x.${exportData.format}`] =
-                            scale3;
-                    })
-                );
-                break;
-            }
-            case ExportScale5Schema:
-                {
+                    break;
+                }
+                case ExportScale3Schema: {
                     const [_, result] = validate(data, array(schema));
 
                     if (result === undefined || result.length <= 0) {
@@ -644,20 +546,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
                             );
 
                             let scale1: Uint8Array,
-                                scale1_5: Uint8Array,
                                 scale2: Uint8Array,
-                                scale3: Uint8Array,
-                                scale4: Uint8Array;
+                                scale3: Uint8Array;
 
                             if (exportData.format === Format.WEBP) {
                                 const { results } =
                                     await convertBuffersToWebPWithConsistentGrid(
                                         [
                                             exportData.scale1,
-                                            exportData.scale1_5,
                                             exportData.scale2,
                                             exportData.scale3,
-                                            exportData.scale4,
                                         ],
                                         projectData.quality
                                     );
@@ -675,262 +573,283 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
                                 const totalParts = results[0].parts.length;
 
-                                const addPartsToZip = (
-                                    baseName: string,
-                                    parts: Uint8Array[]
-                                ) => {
-                                    parts.forEach((part, index) => {
-                                        const partName = buildPartName(
-                                            baseName,
-                                            index,
-                                            totalParts
-                                        );
-                                        zipData[
-                                            `${partName}.${exportData.format}`
-                                        ] = part;
-                                    });
-                                };
-
-                                switch (type) {
-                                    case PluginMessageType.EXPORT_ANDROID: {
-                                        addPartsToZip(
-                                            `drawable-mdpi/${exportName}`,
-                                            results[0].parts
-                                        );
-                                        addPartsToZip(
-                                            `drawable-hdpi/${exportName}`,
-                                            results[1].parts
-                                        );
-                                        addPartsToZip(
-                                            `drawable-xhdpi/${exportName}`,
-                                            results[2].parts
-                                        );
-                                        addPartsToZip(
-                                            `drawable-xxhdpi/${exportName}`,
-                                            results[3].parts
-                                        );
-                                        addPartsToZip(
-                                            `drawable-xxxhdpi/${exportName}`,
-                                            results[4].parts
-                                        );
-                                        break;
-                                    }
-                                    case PluginMessageType.EXPORT_FLUTTER: {
-                                        addPartsToZip(
-                                            `${exportName}`,
-                                            results[0].parts
-                                        );
-                                        addPartsToZip(
-                                            `1.5x/${exportName}`,
-                                            results[1].parts
-                                        );
-                                        addPartsToZip(
-                                            `2.0x/${exportName}`,
-                                            results[2].parts
-                                        );
-                                        addPartsToZip(
-                                            `3.0x/${exportName}`,
-                                            results[3].parts
-                                        );
-                                        addPartsToZip(
-                                            `4.0x/${exportName}`,
-                                            results[4].parts
-                                        );
-                                        break;
-                                    }
-                                }
+                                results[0].parts.forEach((part, index) => {
+                                    const partName = buildPartName(
+                                        exportName,
+                                        index,
+                                        totalParts
+                                    );
+                                    zipData[
+                                        `${partName}.${exportData.format}`
+                                    ] = part;
+                                });
+                                results[1].parts.forEach((part, index) => {
+                                    const partName = buildPartName(
+                                        `${exportName}@2x`,
+                                        index,
+                                        totalParts
+                                    );
+                                    zipData[
+                                        `${partName}.${exportData.format}`
+                                    ] = part;
+                                });
+                                results[2].parts.forEach((part, index) => {
+                                    const partName = buildPartName(
+                                        `${exportName}@3x`,
+                                        index,
+                                        totalParts
+                                    );
+                                    zipData[
+                                        `${partName}.${exportData.format}`
+                                    ] = part;
+                                });
 
                                 return;
                             } else if (
                                 exportData.format === Format.JPG ||
                                 exportData.format === Format.PNG
                             ) {
-                                const result1 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale1,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result1_5 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale1_5,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result2 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale2,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result3 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale3,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result4 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale4,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                scale1 = result1.buffer;
-                                scale1_5 = result1_5.buffer;
-                                scale2 = result2.buffer;
-                                scale3 = result3.buffer;
-                                scale4 = result4.buffer;
-                                totalOriginalSize +=
-                                    result1.originalSize +
-                                    result1_5.originalSize +
-                                    result2.originalSize +
-                                    result3.originalSize +
-                                    result4.originalSize;
-                                totalCompressedSize +=
-                                    result1.compressedSize +
-                                    result1_5.compressedSize +
-                                    result2.compressedSize +
-                                    result3.compressedSize +
-                                    result4.compressedSize;
-                                let scaleCompressionCount = 0;
-                                if (result1.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result1_5.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result2.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result3.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result4.wasCompressed)
-                                    scaleCompressionCount++;
-                                compressedImagesCount += scaleCompressionCount;
+                                scale1 = await compressAndTrack(
+                                    exportData.scale1,
+                                    exportData.format
+                                );
+                                scale2 = await compressAndTrack(
+                                    exportData.scale2,
+                                    exportData.format
+                                );
+                                scale3 = await compressAndTrack(
+                                    exportData.scale3,
+                                    exportData.format
+                                );
                             } else {
                                 scale1 = exportData.scale1;
-                                scale1_5 = exportData.scale1_5;
                                 scale2 = exportData.scale2;
                                 scale3 = exportData.scale3;
-                                scale4 = exportData.scale4;
                             }
 
-                            switch (type) {
-                                case PluginMessageType.EXPORT_ANDROID: {
-                                    zipData[
-                                        `drawable-mdpi/${exportName}.${exportData.format}`
-                                    ] = scale1;
-                                    zipData[
-                                        `drawable-hdpi/${exportName}.${exportData.format}`
-                                    ] = scale1_5;
-                                    zipData[
-                                        `drawable-xhdpi/${exportName}.${exportData.format}`
-                                    ] = scale2;
-                                    zipData[
-                                        `drawable-xxhdpi/${exportName}.${exportData.format}`
-                                    ] = scale3;
-                                    zipData[
-                                        `drawable-xxxhdpi/${exportName}.${exportData.format}`
-                                    ] = scale4;
-                                    break;
-                                }
-                                case PluginMessageType.EXPORT_FLUTTER: {
-                                    zipData[
-                                        `${exportName}.${exportData.format}`
-                                    ] = scale1;
-                                    zipData[
-                                        `1.5x/${exportName}.${exportData.format}`
-                                    ] = scale1_5;
-                                    zipData[
-                                        `2.0x/${exportName}.${exportData.format}`
-                                    ] = scale2;
-                                    zipData[
-                                        `3.0x/${exportName}.${exportData.format}`
-                                    ] = scale3;
-                                    zipData[
-                                        `4.0x/${exportName}.${exportData.format}`
-                                    ] = scale4;
-                                    break;
-                                }
-                            }
+                            zipData[`${exportName}.${exportData.format}`] =
+                                scale1;
+                            zipData[`${exportName}@2x.${exportData.format}`] =
+                                scale2;
+                            zipData[`${exportName}@3x.${exportData.format}`] =
+                                scale3;
                         })
                     );
+                    break;
                 }
-                break;
-        }
+                case ExportScale5Schema:
+                    {
+                        const [_, result] = validate(data, array(schema));
 
-        if (exportDataLength === undefined || firstExportData === undefined) {
-            set({ isLoading: false });
-            return;
-        }
+                        if (result === undefined || result.length <= 0) {
+                            break;
+                        }
 
-        if (Object.keys(zipData).length === 1) {
-            const blob = new Blob([
-                Object.values(zipData)[0] as Uint8Array<ArrayBuffer>,
-            ]);
+                        exportDataLength = result.length;
+                        firstExportData = {
+                            name: result[0].name,
+                            format: result[0].format,
+                        };
 
-            downloadBlob(
-                blob,
-                `${firstExportData.name}.${firstExportData.format}`
-            );
+                        await Promise.all(
+                            result.map(async (exportData) => {
+                                const exportName = sanitizeExportName(
+                                    exportData.name
+                                );
 
-            const compressionStats: CompressionStats = {
-                compressedImagesCount,
-                totalOriginalSize,
-                totalCompressedSize,
-                compressionRatio:
-                    totalOriginalSize > 0
-                        ? (totalOriginalSize - totalCompressedSize) /
-                          totalOriginalSize
-                        : 0,
-            };
+                                let scale1: Uint8Array,
+                                    scale1_5: Uint8Array,
+                                    scale2: Uint8Array,
+                                    scale3: Uint8Array,
+                                    scale4: Uint8Array;
 
-            parent.postMessage(
-                {
-                    pluginMessage: {
-                        type: UiMessageType.SUCCESS_EXPORT,
-                        data: { projectData, compressionStats },
-                    },
-                },
-                "*"
-            );
+                                if (exportData.format === Format.WEBP) {
+                                    const { results } =
+                                        await convertBuffersToWebPWithConsistentGrid(
+                                            [
+                                                exportData.scale1,
+                                                exportData.scale1_5,
+                                                exportData.scale2,
+                                                exportData.scale3,
+                                                exportData.scale4,
+                                            ],
+                                            projectData.quality
+                                        );
 
-            set({ isLoading: false });
-        } else {
-            zip(zipData, (err, data) => {
-                if (err) {
-                    return;
-                }
+                                    results.forEach((result) => {
+                                        totalOriginalSize +=
+                                            result.originalSize;
+                                        totalCompressedSize +=
+                                            result.convertedSize;
+                                        if (
+                                            result.convertedSize <
+                                            result.originalSize
+                                        ) {
+                                            compressedImagesCount++;
+                                        }
+                                    });
 
-                const content = new Blob([data as Uint8Array<ArrayBuffer>], {
-                    type: "application/zip",
-                });
+                                    const totalParts = results[0].parts.length;
 
-                if (exportDataLength > 1) {
-                    downloadBlob(
-                        content,
-                        `${firstExportData.name}_and_${exportDataLength - 1}_others.zip`
-                    );
-                } else {
-                    downloadBlob(content, `${firstExportData.name}.zip`);
-                }
+                                    const addPartsToZip = (
+                                        baseName: string,
+                                        parts: Uint8Array[]
+                                    ) => {
+                                        parts.forEach((part, index) => {
+                                            const partName = buildPartName(
+                                                baseName,
+                                                index,
+                                                totalParts
+                                            );
+                                            zipData[
+                                                `${partName}.${exportData.format}`
+                                            ] = part;
+                                        });
+                                    };
+
+                                    switch (type) {
+                                        case PluginMessageType.EXPORT_ANDROID: {
+                                            addPartsToZip(
+                                                `drawable-mdpi/${exportName}`,
+                                                results[0].parts
+                                            );
+                                            addPartsToZip(
+                                                `drawable-hdpi/${exportName}`,
+                                                results[1].parts
+                                            );
+                                            addPartsToZip(
+                                                `drawable-xhdpi/${exportName}`,
+                                                results[2].parts
+                                            );
+                                            addPartsToZip(
+                                                `drawable-xxhdpi/${exportName}`,
+                                                results[3].parts
+                                            );
+                                            addPartsToZip(
+                                                `drawable-xxxhdpi/${exportName}`,
+                                                results[4].parts
+                                            );
+                                            break;
+                                        }
+                                        case PluginMessageType.EXPORT_FLUTTER: {
+                                            addPartsToZip(
+                                                `${exportName}`,
+                                                results[0].parts
+                                            );
+                                            addPartsToZip(
+                                                `1.5x/${exportName}`,
+                                                results[1].parts
+                                            );
+                                            addPartsToZip(
+                                                `2.0x/${exportName}`,
+                                                results[2].parts
+                                            );
+                                            addPartsToZip(
+                                                `3.0x/${exportName}`,
+                                                results[3].parts
+                                            );
+                                            addPartsToZip(
+                                                `4.0x/${exportName}`,
+                                                results[4].parts
+                                            );
+                                            break;
+                                        }
+                                    }
+
+                                    return;
+                                } else if (
+                                    exportData.format === Format.JPG ||
+                                    exportData.format === Format.PNG
+                                ) {
+                                    scale1 = await compressAndTrack(
+                                        exportData.scale1,
+                                        exportData.format
+                                    );
+                                    scale1_5 = await compressAndTrack(
+                                        exportData.scale1_5,
+                                        exportData.format
+                                    );
+                                    scale2 = await compressAndTrack(
+                                        exportData.scale2,
+                                        exportData.format
+                                    );
+                                    scale3 = await compressAndTrack(
+                                        exportData.scale3,
+                                        exportData.format
+                                    );
+                                    scale4 = await compressAndTrack(
+                                        exportData.scale4,
+                                        exportData.format
+                                    );
+                                } else {
+                                    scale1 = exportData.scale1;
+                                    scale1_5 = exportData.scale1_5;
+                                    scale2 = exportData.scale2;
+                                    scale3 = exportData.scale3;
+                                    scale4 = exportData.scale4;
+                                }
+
+                                switch (type) {
+                                    case PluginMessageType.EXPORT_ANDROID: {
+                                        zipData[
+                                            `drawable-mdpi/${exportName}.${exportData.format}`
+                                        ] = scale1;
+                                        zipData[
+                                            `drawable-hdpi/${exportName}.${exportData.format}`
+                                        ] = scale1_5;
+                                        zipData[
+                                            `drawable-xhdpi/${exportName}.${exportData.format}`
+                                        ] = scale2;
+                                        zipData[
+                                            `drawable-xxhdpi/${exportName}.${exportData.format}`
+                                        ] = scale3;
+                                        zipData[
+                                            `drawable-xxxhdpi/${exportName}.${exportData.format}`
+                                        ] = scale4;
+                                        break;
+                                    }
+                                    case PluginMessageType.EXPORT_FLUTTER: {
+                                        zipData[
+                                            `${exportName}.${exportData.format}`
+                                        ] = scale1;
+                                        zipData[
+                                            `1.5x/${exportName}.${exportData.format}`
+                                        ] = scale1_5;
+                                        zipData[
+                                            `2.0x/${exportName}.${exportData.format}`
+                                        ] = scale2;
+                                        zipData[
+                                            `3.0x/${exportName}.${exportData.format}`
+                                        ] = scale3;
+                                        zipData[
+                                            `4.0x/${exportName}.${exportData.format}`
+                                        ] = scale4;
+                                        break;
+                                    }
+                                }
+                            })
+                        );
+                    }
+                    break;
+            }
+
+            if (
+                exportDataLength === undefined ||
+                firstExportData === undefined
+            ) {
+                set({ isLoading: false });
+                return;
+            }
+
+            if (Object.keys(zipData).length === 1) {
+                const blob = new Blob([
+                    Object.values(zipData)[0] as Uint8Array<ArrayBuffer>,
+                ]);
+
+                downloadBlob(
+                    blob,
+                    `${firstExportData.name}.${firstExportData.format}`
+                );
 
                 const compressionStats: CompressionStats = {
                     compressedImagesCount,
@@ -954,7 +873,56 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 );
 
                 set({ isLoading: false });
-            });
+            } else {
+                zip(zipData, (err, data) => {
+                    if (err) {
+                        notifyExportFailed();
+                        return;
+                    }
+
+                    const content = new Blob(
+                        [data as Uint8Array<ArrayBuffer>],
+                        {
+                            type: "application/zip",
+                        }
+                    );
+
+                    if (exportDataLength > 1) {
+                        downloadBlob(
+                            content,
+                            `${firstExportData.name}_and_${exportDataLength - 1}_others.zip`
+                        );
+                    } else {
+                        downloadBlob(content, `${firstExportData.name}.zip`);
+                    }
+
+                    const compressionStats: CompressionStats = {
+                        compressedImagesCount,
+                        totalOriginalSize,
+                        totalCompressedSize,
+                        compressionRatio:
+                            totalOriginalSize > 0
+                                ? (totalOriginalSize - totalCompressedSize) /
+                                  totalOriginalSize
+                                : 0,
+                    };
+
+                    parent.postMessage(
+                        {
+                            pluginMessage: {
+                                type: UiMessageType.SUCCESS_EXPORT,
+                                data: { projectData, compressionStats },
+                            },
+                        },
+                        "*"
+                    );
+
+                    set({ isLoading: false });
+                });
+            }
+        } catch (error) {
+            console.error("Export failed:", error);
+            notifyExportFailed();
         }
     },
     onSaveSetting: (settingScope, setting) => {

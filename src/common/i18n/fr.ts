@@ -18,8 +18,10 @@ export const fr = {
 
     // SettingsPage
     settingsTitle: "Paramètres",
-    configuringGlobal: "Configuration des paramètres globaux pour tous les projets",
-    configuringProject: "Configuration des paramètres pour ce projet uniquement",
+    configuringGlobal:
+        "Configuration des paramètres globaux pour tous les projets",
+    configuringProject:
+        "Configuration des paramètres pour ce projet uniquement",
     appearance: "Apparence",
     light: "Clair",
     dark: "Sombre",
@@ -31,7 +33,8 @@ export const fr = {
     itemsPerRow: "Éléments par ligne :",
     actions: "Actions",
     autoCloseAfterExport: "Fermer automatiquement après l'export",
-    reloadPreviewOnSelectionChange: "Actualiser l'aperçu lors du changement de sélection",
+    reloadPreviewOnSelectionChange:
+        "Actualiser l'aperçu lors du changement de sélection",
     forceCompressionAt100Quality: "Forcer la compression à 100% de qualité",
     previewNameCase: "Casse du nom d'aperçu",
     original: "Original",
@@ -51,9 +54,12 @@ export const fr = {
     // UI error messages
     errorSelectLayer: "Veuillez sélectionner un calque",
     errorEnterFileNames: "Veuillez entrer les noms des fichiers image",
-    errorDuplicateFileNames: "Des noms de fichiers image en double ont été trouvés",
+    errorDuplicateFileNames:
+        "Des noms de fichiers image en double ont été trouvés",
+    errorExportFailed: "Échec de l’exportation. Veuillez réessayer.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : Export réussi",
-    notifyCompressed: "{count} image(s) compressée(s), {saved} économisés ({pct}%)",
+    notifyCompressed:
+        "{count} image(s) compressée(s), {saved} économisés ({pct}%)",
 } satisfies TranslationDict;

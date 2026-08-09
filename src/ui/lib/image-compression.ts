@@ -27,7 +27,9 @@ export const compressImageBuffer = async (
 
     try {
         const mimeType = format === Format.JPG ? "image/jpeg" : "image/png";
-        const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], { type: mimeType });
+        const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], {
+            type: mimeType,
+        });
         const file = new File([blob], `image.${format}`, { type: mimeType });
 
         const compressionOptions = {
@@ -46,23 +48,6 @@ export const compressImageBuffer = async (
         console.error("Image compression failed:", error);
         return buffer;
     }
-};
-
-export const compressImageBufferSafe = async (
-    buffer: Uint8Array,
-    options: CompressionOptions
-): Promise<Uint8Array> => {
-    if (options.quality >= 100 && !options.forceCompressionAt100Quality) {
-        return buffer;
-    }
-
-    const compressed = await compressImageBuffer(buffer, options);
-
-    if (compressed.length >= buffer.length) {
-        return buffer;
-    }
-
-    return compressed;
 };
 
 export const compressImageBufferWithStats = async (

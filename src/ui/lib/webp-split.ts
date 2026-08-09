@@ -52,11 +52,15 @@ const canvasToBuffer = async (
 };
 
 const decodeBuffer = async (buffer: Uint8Array): Promise<ImageBitmap> => {
-    const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], { type: "image/png" });
+    const blob = new Blob([buffer as Uint8Array<ArrayBuffer>], {
+        type: "image/png",
+    });
     return await createImageBitmap(blob);
 };
 
-const calculateGrid = (sizes: { width: number; height: number }[]): SplitGrid => {
+const calculateGrid = (
+    sizes: { width: number; height: number }[]
+): SplitGrid => {
     const maxWidth = Math.max(...sizes.map((size) => size.width));
     const maxHeight = Math.max(...sizes.map((size) => size.height));
 
@@ -105,9 +109,14 @@ export const convertBuffersToWebPWithConsistentGrid = async (
     buffers: Uint8Array[],
     quality: number
 ): Promise<WebPBatchConversion> => {
-    const bitmaps = await Promise.all(buffers.map((buffer) => decodeBuffer(buffer)));
+    const bitmaps = await Promise.all(
+        buffers.map((buffer) => decodeBuffer(buffer))
+    );
     const grid = calculateGrid(
-        bitmaps.map((bitmap) => ({ width: bitmap.width, height: bitmap.height }))
+        bitmaps.map((bitmap) => ({
+            width: bitmap.width,
+            height: bitmap.height,
+        }))
     );
     const shouldSplit = grid.cols > 1 || grid.rows > 1;
 

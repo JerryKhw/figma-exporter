@@ -52,6 +52,7 @@ export const zhTW = {
     errorSelectLayer: "請選取一個圖層",
     errorEnterFileNames: "請輸入圖片檔案名稱",
     errorDuplicateFileNames: "發現重複的圖片檔案名稱",
+    errorExportFailed: "匯出失敗，請重試。",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter：匯出成功",

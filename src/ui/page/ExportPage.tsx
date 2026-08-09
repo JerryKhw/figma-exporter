@@ -19,6 +19,8 @@ import {
 } from "@ui/components/custom";
 
 import { Format, Platform, ViewMode } from "@common/enum";
+import type { Language } from "@common/enum";
+import { buildExportFileName } from "@ui/lib/utils";
 import { useAppStore } from "@ui/app-store";
 
 const formatList = [
@@ -67,6 +69,17 @@ const platformList = [
     },
 ];
 
+const EMPTY_NAME_COLOR = "border-red-500 focus:border-red-500";
+
+const DUPLICATE_NAME_COLORS = [
+    "border-orange-500 focus:border-orange-500",
+    "border-violet-500 focus:border-violet-500",
+    "border-blue-500 focus:border-blue-500",
+    "border-pink-500 focus:border-pink-500",
+    "border-teal-500 focus:border-teal-500",
+    "border-amber-500 focus:border-amber-500",
+];
+
 export const ExportPage = () => {
     const {
         isDev,
@@ -75,7 +88,10 @@ export const ExportPage = () => {
         previews,
         updatePreviewName,
         deletePreview,
-        setting: { viewMode, perRow, language: lang },
+        focusPreviewId,
+        setFocusPreviewId,
+        validationActive,
+        setting: { viewMode, perRow, language: lang, exportNameCleanupRules },
         projectData,
         onChangeFormat,
         onChangePlatform,
@@ -101,6 +117,53 @@ export const ExportPage = () => {
         return format === Format.SVG || format === Format.PDF;
     }, [format]);
 
+    const invalidColorById = useMemo(() => {
+        const colorById = new Map<string, string>();
+
+        if (!validationActive) {
+            return colorById;
+        }
+
+        // Group by the actual output filename (prefix/suffix + cleanup rules),
+        // so empties and collisions match what really gets exported.
+        const fileNameOf = (name: string) =>
+            buildExportFileName(name, prefix, suffix, exportNameCleanupRules);
+
+        const nameCounts = new Map<string, number>();
+        previews.forEach((preview) => {
+            const fileName = fileNameOf(preview.name);
+            nameCounts.set(fileName, (nameCounts.get(fileName) ?? 0) + 1);
+        });
+
+        const colorByDuplicateName = new Map<string, string>();
+        previews.forEach((preview) => {
+            const fileName = fileNameOf(preview.name);
+            if (
+                fileName !== "" &&
+                (nameCounts.get(fileName) ?? 0) > 1 &&
+                !colorByDuplicateName.has(fileName)
+            ) {
+                colorByDuplicateName.set(
+                    fileName,
+                    DUPLICATE_NAME_COLORS[
+                        colorByDuplicateName.size % DUPLICATE_NAME_COLORS.length
+                    ]
+                );
+            }
+        });
+
+        previews.forEach((preview) => {
+            const fileName = fileNameOf(preview.name);
+            if (fileName === "") {
+                colorById.set(preview.id, EMPTY_NAME_COLOR);
+            } else if (colorByDuplicateName.has(fileName)) {
+                colorById.set(preview.id, colorByDuplicateName.get(fileName)!);
+            }
+        });
+
+        return colorById;
+    }, [validationActive, previews, prefix, suffix, exportNameCleanupRules]);
+
     return (
         <>
             <div className="size-full bg-white dark:bg-[#3A3A3A] flex flex-col relative transition-colors duration-200">
@@ -124,6 +187,11 @@ export const ExportPage = () => {
                                         );
                                     }}
                                     onDelete={() => onDeletePreview(preview.id)}
+                                    shouldFocus={preview.id === focusPreviewId}
+                                    onFocused={() => setFocusPreviewId(null)}
+                                    invalidColorClass={invalidColorById.get(
+                                        preview.id
+                                    )}
                                 />
                             ))}
                         </div>
@@ -141,6 +209,11 @@ export const ExportPage = () => {
                                         );
                                     }}
                                     onDelete={() => onDeletePreview(preview.id)}
+                                    shouldFocus={preview.id === focusPreviewId}
+                                    onFocused={() => setFocusPreviewId(null)}
+                                    invalidColorClass={invalidColorById.get(
+                                        preview.id
+                                    )}
                                 />
                             ))}
                         </div>
@@ -176,7 +249,9 @@ export const ExportPage = () => {
                                 {(format === Format.JPG ||
                                     format === Format.PNG ||
                                     format === Format.WEBP) && (
-                                    <CustomTooltip content={t("tooltipQuality", lang)}>
+                                    <CustomTooltip
+                                        content={t("tooltipQuality", lang)}
+                                    >
                                         <div className="relative w-16">
                                             <Input
                                                 placeholder="100"
@@ -192,104 +267,38 @@ export const ExportPage = () => {
                                 )}
 
                                 {!isDev && (
-                                    <>
-                                        <Select
-                                            value={platform}
-                                            onValueChange={onChangePlatform}
-                                            disabled={platformDisabled}
-                                        >
-                                            <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                                    {t("platform", lang)}
-                                                </div>
-                                                {platformList.map((item) => (
-                                                    <SelectItem
-                                                        key={item.value}
-                                                        value={item.value}
-                                                    >
-                                                        {item.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-
-                                        {platform === Platform.WEB &&
-                                            (format === Format.JPG ||
-                                                format === Format.PNG ||
-                                                format === Format.WEBP) && (
-                                                <CustomTooltip content={t("tooltipScale", lang)}>
-                                                    <div className="relative w-16">
-                                                        <Input
-                                                            placeholder="1"
-                                                            value={scale}
-                                                            onChange={
-                                                                onChangeScale
-                                                            }
-                                                            onBlur={onBlurScale}
-                                                            className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                                                        />
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
-                                                            x
-                                                        </span>
-                                                    </div>
-                                                </CustomTooltip>
-                                            )}
-                                    </>
+                                    <PlatformScaleControls
+                                        platform={platform}
+                                        onChangePlatform={onChangePlatform}
+                                        platformDisabled={platformDisabled}
+                                        format={format}
+                                        scale={scale}
+                                        onChangeScale={onChangeScale}
+                                        onBlurScale={onBlurScale}
+                                        lang={lang}
+                                    />
                                 )}
                             </div>
 
                             {isDev && (
                                 <div className="flex gap-2">
-                                    <Select
-                                        value={platform}
-                                        onValueChange={onChangePlatform}
-                                        disabled={platformDisabled}
-                                    >
-                                        <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
-                                                {t("platform", lang)}
-                                            </div>
-                                            {platformList.map((item) => (
-                                                <SelectItem
-                                                    key={item.value}
-                                                    value={item.value}
-                                                >
-                                                    {item.name}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-
-                                    {platform === Platform.WEB &&
-                                        (format === Format.JPG ||
-                                            format === Format.PNG ||
-                                            format === Format.WEBP) && (
-                                            <CustomTooltip content={t("tooltipScale", lang)}>
-                                                <div className="relative w-16">
-                                                    <Input
-                                                        placeholder="1"
-                                                        value={scale}
-                                                        onChange={onChangeScale}
-                                                        onBlur={onBlurScale}
-                                                        className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
-                                                    />
-                                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
-                                                        x
-                                                    </span>
-                                                </div>
-                                            </CustomTooltip>
-                                        )}
+                                    <PlatformScaleControls
+                                        platform={platform}
+                                        onChangePlatform={onChangePlatform}
+                                        platformDisabled={platformDisabled}
+                                        format={format}
+                                        scale={scale}
+                                        onChangeScale={onChangeScale}
+                                        onBlurScale={onBlurScale}
+                                        lang={lang}
+                                    />
                                 </div>
                             )}
 
                             <div className="flex gap-2">
-                                <CustomTooltip content={t("tooltipPrefix", lang)}>
+                                <CustomTooltip
+                                    content={t("tooltipPrefix", lang)}
+                                >
                                     <Input
                                         value={prefix}
                                         onChange={onChangePrefix}
@@ -297,7 +306,9 @@ export const ExportPage = () => {
                                         className="w-20 h-7 text-xs focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                                     />
                                 </CustomTooltip>
-                                <CustomTooltip content={t("tooltipSuffix", lang)}>
+                                <CustomTooltip
+                                    content={t("tooltipSuffix", lang)}
+                                >
                                     <Input
                                         value={suffix}
                                         onChange={onChangeSuffix}
@@ -308,62 +319,22 @@ export const ExportPage = () => {
                             </div>
 
                             {isDev && (
-                                <div className="flex gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                                        onClick={onGoSettingsPage}
-                                    >
-                                        <Settings className="h-3 w-3 mr-1" />
-                                        {t("settings", lang)}
-                                    </Button>
-
-                                    <div className="relative">
-                                        <div className="flex">
-                                            <Button
-                                                size="sm"
-                                                className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
-                                                onClick={onExport}
-                                                disabled={isLoading}
-                                            >
-                                                {isLoading
-                                                    ? t("exporting", lang)
-                                                    : t("export", lang)}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <ActionButtons
+                                    onGoSettingsPage={onGoSettingsPage}
+                                    onExport={onExport}
+                                    isLoading={isLoading}
+                                    lang={lang}
+                                />
                             )}
                         </div>
 
                         {!isDev && (
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                                    onClick={onGoSettingsPage}
-                                >
-                                    <Settings className="h-3 w-3 mr-1" />
-                                    {t("settings", lang)}
-                                </Button>
-
-                                <div className="relative">
-                                    <div className="flex">
-                                        <Button
-                                            size="sm"
-                                            className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
-                                            onClick={onExport}
-                                            disabled={isLoading}
-                                        >
-                                            {isLoading
-                                                ? t("exporting", lang)
-                                                : t("export", lang)}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
+                            <ActionButtons
+                                onGoSettingsPage={onGoSettingsPage}
+                                onExport={onExport}
+                                isLoading={isLoading}
+                                lang={lang}
+                            />
                         )}
                     </div>
                 </div>
@@ -374,3 +345,102 @@ export const ExportPage = () => {
         </>
     );
 };
+
+const PlatformScaleControls = ({
+    platform,
+    onChangePlatform,
+    platformDisabled,
+    format,
+    scale,
+    onChangeScale,
+    onBlurScale,
+    lang,
+}: {
+    platform: Platform;
+    onChangePlatform: (platform: Platform) => void;
+    platformDisabled: boolean;
+    format: Format;
+    scale: number;
+    onChangeScale: React.ChangeEventHandler<HTMLInputElement>;
+    onBlurScale: React.FocusEventHandler<HTMLInputElement>;
+    lang: Language;
+}) => (
+    <>
+        <Select
+            value={platform}
+            onValueChange={onChangePlatform}
+            disabled={platformDisabled}
+        >
+            <SelectTrigger className="w-24 h-7 text-xs bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <div className="px-2 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 pointer-events-none border-b border-gray-100 dark:border-gray-600">
+                    {t("platform", lang)}
+                </div>
+                {platformList.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                        {item.name}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+
+        {platform === Platform.WEB &&
+            (format === Format.JPG ||
+                format === Format.PNG ||
+                format === Format.WEBP) && (
+                <CustomTooltip content={t("tooltipScale", lang)}>
+                    <div className="relative w-16">
+                        <Input
+                            placeholder="1"
+                            value={scale}
+                            onChange={onChangeScale}
+                            onBlur={onBlurScale}
+                            className="h-7 text-xs text-center pr-4 focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400 pointer-events-none">
+                            x
+                        </span>
+                    </div>
+                </CustomTooltip>
+            )}
+    </>
+);
+
+const ActionButtons = ({
+    onGoSettingsPage,
+    onExport,
+    isLoading,
+    lang,
+}: {
+    onGoSettingsPage: () => void;
+    onExport: () => void;
+    isLoading: boolean;
+    lang: Language;
+}) => (
+    <div className="flex gap-2">
+        <Button
+            variant="outline"
+            size="sm"
+            className="h-8 px-3 bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+            onClick={onGoSettingsPage}
+        >
+            <Settings className="h-3 w-3 mr-1" />
+            {t("settings", lang)}
+        </Button>
+
+        <div className="relative">
+            <div className="flex">
+                <Button
+                    size="sm"
+                    className="h-8 px-4 bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800 border-gray-600 dark:border-gray-300"
+                    onClick={onExport}
+                    disabled={isLoading}
+                >
+                    {isLoading ? t("exporting", lang) : t("export", lang)}
+                </Button>
+            </div>
+        </div>
+    </div>
+);

@@ -52,6 +52,7 @@ export const ja = {
     errorSelectLayer: "レイヤーを選択してください",
     errorEnterFileNames: "画像ファイル名を入力してください",
     errorDuplicateFileNames: "重複した画像ファイル名があります",
+    errorExportFailed: "エクスポートに失敗しました。もう一度お試しください。",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : エクスポート成功",

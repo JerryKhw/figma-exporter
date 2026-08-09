@@ -180,6 +180,7 @@ if (isDev) {
 }
 
 let selectionChangeTimeout: number | null = null;
+let resizeSaveTimeout: number | null = null;
 
 figma.on("selectionchange", async () => {
     if (selectionChangeTimeout) {
@@ -301,8 +302,14 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                 return;
             }
 
-            setData(GlobalKey.SIZE, data);
             figma.ui.resize(data.w, data.h);
+
+            if (resizeSaveTimeout) {
+                clearTimeout(resizeSaveTimeout);
+            }
+            resizeSaveTimeout = setTimeout(() => {
+                setData(GlobalKey.SIZE, data);
+            }, 200);
             break;
         }
         case UiMessageType.ERROR: {

@@ -2,8 +2,45 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { arrayBufferToWebP } from "webp-converter-browser";
 
+import type { CleanupRule } from "@common/interface";
+
 export const cn = (...inputs: ClassValue[]) => {
     return twMerge(clsx(inputs));
+};
+
+export const applyCleanupRules = (
+    name: string,
+    rules: CleanupRule[]
+): string => {
+    let result = name;
+
+    for (const rule of rules) {
+        try {
+            result = result.replace(
+                new RegExp(rule.original, "g"),
+                rule.replacement
+            );
+        } catch {
+            // Invalid regex (e.g. a literal "(" or "["): skip this rule
+        }
+    }
+
+    return result;
+};
+
+// Mirrors the final export filename: the plugin applies prefix/suffix to the
+// last path segment, then the UI applies the export-name cleanup rules.
+export const buildExportFileName = (
+    name: string,
+    prefix: string,
+    suffix: string,
+    rules: CleanupRule[]
+): string => {
+    const segments = name.split("/");
+    segments[segments.length - 1] =
+        prefix + segments[segments.length - 1] + suffix;
+
+    return applyCleanupRules(segments.join("/"), rules);
 };
 
 export const downloadBlob = (blob: Blob, fileName: string) => {

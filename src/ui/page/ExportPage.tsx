@@ -20,6 +20,7 @@ import {
 
 import { Format, Platform, ViewMode } from "@common/enum";
 import type { Language } from "@common/enum";
+import { buildExportFileName } from "@ui/lib/utils";
 import { useAppStore } from "@ui/app-store";
 
 const formatList = [
@@ -90,7 +91,7 @@ export const ExportPage = () => {
         focusPreviewId,
         setFocusPreviewId,
         validationActive,
-        setting: { viewMode, perRow, language: lang },
+        setting: { viewMode, perRow, language: lang, exportNameCleanupRules },
         projectData,
         onChangeFormat,
         onChangePlatform,
@@ -123,23 +124,27 @@ export const ExportPage = () => {
             return colorById;
         }
 
+        // Group by the actual output filename (prefix/suffix + cleanup rules),
+        // so empties and collisions match what really gets exported.
+        const fileNameOf = (name: string) =>
+            buildExportFileName(name, prefix, suffix, exportNameCleanupRules);
+
         const nameCounts = new Map<string, number>();
         previews.forEach((preview) => {
-            nameCounts.set(
-                preview.name,
-                (nameCounts.get(preview.name) ?? 0) + 1
-            );
+            const fileName = fileNameOf(preview.name);
+            nameCounts.set(fileName, (nameCounts.get(fileName) ?? 0) + 1);
         });
 
         const colorByDuplicateName = new Map<string, string>();
         previews.forEach((preview) => {
+            const fileName = fileNameOf(preview.name);
             if (
-                preview.name !== "" &&
-                (nameCounts.get(preview.name) ?? 0) > 1 &&
-                !colorByDuplicateName.has(preview.name)
+                fileName !== "" &&
+                (nameCounts.get(fileName) ?? 0) > 1 &&
+                !colorByDuplicateName.has(fileName)
             ) {
                 colorByDuplicateName.set(
-                    preview.name,
+                    fileName,
                     DUPLICATE_NAME_COLORS[
                         colorByDuplicateName.size % DUPLICATE_NAME_COLORS.length
                     ]
@@ -148,18 +153,16 @@ export const ExportPage = () => {
         });
 
         previews.forEach((preview) => {
-            if (preview.name === "") {
+            const fileName = fileNameOf(preview.name);
+            if (fileName === "") {
                 colorById.set(preview.id, EMPTY_NAME_COLOR);
-            } else if (colorByDuplicateName.has(preview.name)) {
-                colorById.set(
-                    preview.id,
-                    colorByDuplicateName.get(preview.name)!
-                );
+            } else if (colorByDuplicateName.has(fileName)) {
+                colorById.set(preview.id, colorByDuplicateName.get(fileName)!);
             }
         });
 
         return colorById;
-    }, [validationActive, previews]);
+    }, [validationActive, previews, prefix, suffix, exportNameCleanupRules]);
 
     return (
         <>

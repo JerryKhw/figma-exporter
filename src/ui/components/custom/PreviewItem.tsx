@@ -90,6 +90,7 @@ export const PreviewItem = ({
                 placeholder="name"
                 value={preview.name}
                 onChange={onChange}
+                aria-invalid={!!invalidColorClass}
                 className={`h-7 text-xs ${
                     viewMode === ViewMode.LIST
                         ? "flex-1 text-left"

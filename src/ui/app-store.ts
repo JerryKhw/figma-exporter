@@ -34,7 +34,11 @@ import {
     convertBuffersToWebPWithConsistentGrid,
     buildPartName,
 } from "./lib/webp-split";
-import { downloadBlob } from "./lib/utils";
+import {
+    applyCleanupRules,
+    buildExportFileName,
+    downloadBlob,
+} from "./lib/utils";
 import { zip } from "fflate";
 
 type AppStore = {
@@ -288,28 +292,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
             }));
         }
     },
-    _sanitizeExportName: (setting, name) => {
-        let tmpExportName = name;
-
-        setting.exportNameCleanupRules.forEach((data) => {
-            try {
-                tmpExportName = tmpExportName.replace(
-                    new RegExp(data.original, "g"),
-                    data.replacement
-                );
-            } catch {
-                // Invalid regex (e.g. a literal "(" or "["): skip this rule
-            }
-        });
-
-        return tmpExportName;
-    },
+    _sanitizeExportName: (setting, name) =>
+        applyCleanupRules(name, setting.exportNameCleanupRules),
     onExport: () => {
-        const { previews, projectData } = get();
+        const { previews, projectData, setting } = get();
 
-        const previewNames = previews.map((preview) => preview.name);
+        const fileNameOf = (name: string) =>
+            buildExportFileName(
+                name,
+                projectData.prefix,
+                projectData.suffix,
+                setting.exportNameCleanupRules
+            );
 
-        const language = get().setting.language ?? Language.EN;
+        const language = setting.language ?? Language.EN;
 
         if (previews.length === 0) {
             parent.postMessage(
@@ -325,8 +321,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
+        // Validate the actual output filename (prefix/suffix + cleanup rules
+        // applied), so names that reduce to "" (e.g. "-" or " ") are caught.
         const emptyIds = previews
-            .filter((preview) => preview.name === "")
+            .filter((preview) => fileNameOf(preview.name) === "")
             .map((preview) => preview.id);
         if (emptyIds.length > 0) {
             set({ validationActive: true, focusPreviewId: emptyIds[0] });
@@ -343,13 +341,17 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        if (previewNames.length != new Set(previewNames).size) {
-            const nameCounts = previewNames.reduce(
+        const fileNames = previews.map((preview) => fileNameOf(preview.name));
+        if (fileNames.length != new Set(fileNames).size) {
+            const nameCounts = fileNames.reduce(
                 (counts, name) => counts.set(name, (counts.get(name) ?? 0) + 1),
                 new Map<string, number>()
             );
             const duplicateIds = previews
-                .filter((preview) => (nameCounts.get(preview.name) ?? 0) > 1)
+                .filter(
+                    (preview) =>
+                        (nameCounts.get(fileNameOf(preview.name)) ?? 0) > 1
+                )
                 .map((preview) => preview.id);
 
             set({

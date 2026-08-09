@@ -92,25 +92,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     currentTheme: Theme.SYSTEM,
     isDarkMode: false,
     initializeTheme: () => {
-        const { setting } = get();
-        const systemDarkMode = window.matchMedia(
-            "(prefers-color-scheme: dark)"
-        ).matches;
-
-        const shouldBeDark =
-            setting.theme === Theme.DARK
-                ? true
-                : setting.theme === Theme.LIGHT
-                  ? false
-                  : systemDarkMode;
-
-        if (shouldBeDark) {
-            document.documentElement.classList.add("dark");
-        } else {
-            document.documentElement.classList.remove("dark");
-        }
-
-        set({ currentTheme: setting.theme, isDarkMode: shouldBeDark });
+        get().applyTheme(get().setting.theme);
     },
     applyTheme: (theme: Theme) => {
         const systemDarkMode = window.matchMedia(

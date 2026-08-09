@@ -44,9 +44,6 @@ export const SettingsPage = () => {
     } = useAppStore();
 
     const { settingScope } = projectData;
-    const lang =
-        (settingScope === SettingScope.GLOBAL ? globalSetting : projectSetting)
-            .language ?? Language.EN;
 
     const [tmpSettingScope, setTmpSettingScope] = useState(settingScope);
     const [tmpSetting, setTmpSetting] = useState(
@@ -703,45 +700,21 @@ export const SettingsPage = () => {
                             />
 
                             {!isDev && (
-                                <div className="flex gap-2">
-                                    <Button
-                                        onClick={onGoExportPage}
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                                    >
-                                        {t("cancel", tmpLang)}
-                                    </Button>
-                                    <Button
-                                        onClick={onSave}
-                                        size="sm"
-                                        className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
-                                    >
-                                        {t("save", tmpLang)}
-                                    </Button>
-                                </div>
+                                <SaveCancelButtons
+                                    onGoExportPage={onGoExportPage}
+                                    onSave={onSave}
+                                    lang={tmpLang}
+                                />
                             )}
                         </div>
                     </div>
 
                     {isDev && (
-                        <div className="flex gap-2">
-                            <Button
-                                onClick={onGoExportPage}
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
-                            >
-                                {t("cancel", tmpLang)}
-                            </Button>
-                            <Button
-                                onClick={onSave}
-                                size="sm"
-                                className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
-                            >
-                                {t("save", tmpLang)}
-                            </Button>
-                        </div>
+                        <SaveCancelButtons
+                            onGoExportPage={onGoExportPage}
+                            onSave={onSave}
+                            lang={tmpLang}
+                        />
                     )}
                 </div>
             </div>
@@ -750,6 +723,34 @@ export const SettingsPage = () => {
         </>
     );
 };
+
+const SaveCancelButtons = ({
+    onGoExportPage,
+    onSave,
+    lang,
+}: {
+    onGoExportPage: () => void;
+    onSave: () => void;
+    lang: Language;
+}) => (
+    <div className="flex gap-2">
+        <Button
+            onClick={onGoExportPage}
+            variant="outline"
+            size="sm"
+            className="h-7 px-3 text-xs bg-transparent border-gray-200 dark:border-gray-600 hover:bg-gray-50"
+        >
+            {t("cancel", lang)}
+        </Button>
+        <Button
+            onClick={onSave}
+            size="sm"
+            className="h-7 px-3 text-xs bg-black dark:bg-white hover:bg-gray-800 text-white dark:text-gray-800"
+        >
+            {t("save", lang)}
+        </Button>
+    </div>
+);
 
 const SettingsScopeToggle = ({
     value,

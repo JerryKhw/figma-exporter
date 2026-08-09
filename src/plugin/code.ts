@@ -52,10 +52,6 @@ const getExportSetting = (
     };
 };
 
-const sleep = (ms: number) => {
-    return new Promise((r) => setTimeout(r, ms));
-};
-
 const safeReplace = (
     input: string,
     pattern: string,
@@ -71,7 +67,6 @@ const safeReplace = (
 
 class ApiQueue {
     private queue: Array<() => Promise<any>> = [];
-    private processing = false;
     private maxConcurrency = 3;
     private activePromises = 0;
     private minDelay = 30;
@@ -90,13 +85,7 @@ class ApiQueue {
         });
     }
 
-    private async process() {
-        if (this.processing || this.activePromises >= this.maxConcurrency) {
-            return;
-        }
-
-        this.processing = true;
-
+    private process() {
         while (
             this.queue.length > 0 &&
             this.activePromises < this.maxConcurrency
@@ -110,8 +99,6 @@ class ApiQueue {
                 });
             }
         }
-
-        this.processing = false;
     }
 }
 
@@ -131,6 +118,11 @@ interface TmpExport {
 
 let projectData: ProjectData | undefined = undefined;
 let setting: Setting | undefined = undefined;
+
+let resolveSettingReady: () => void;
+const settingReady = new Promise<void>((resolve) => {
+    resolveSettingReady = resolve;
+});
 
 const getPreview = async (
     setting: Setting,
@@ -188,12 +180,8 @@ figma.on("selectionchange", async () => {
     }
 
     selectionChangeTimeout = setTimeout(async () => {
-        let notUndefinedSetting = setting;
-
-        while (notUndefinedSetting === undefined) {
-            await sleep(10);
-            notUndefinedSetting = setting;
-        }
+        await settingReady;
+        const notUndefinedSetting = setting!;
 
         if (!notUndefinedSetting.reloadPreviewOnSelectionChange) {
             return;
@@ -266,6 +254,7 @@ Promise.all([
             : globalSetting;
 
     setting = currentSetting;
+    resolveSettingReady();
 
     const selection = figma.currentPage.selection;
     const previews: Preview[] = [];

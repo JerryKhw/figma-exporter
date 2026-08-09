@@ -407,6 +407,26 @@ export const useAppStore = create<AppStore>((set, get) => ({
             let totalCompressedSize = 0;
             let compressedImagesCount = 0;
 
+            const compressAndTrack = async (
+                buffer: Uint8Array,
+                format: Format
+            ): Promise<Uint8Array> => {
+                const result = await compressImageBufferWithStats(buffer, {
+                    quality: projectData.quality,
+                    format,
+                    forceCompressionAt100Quality:
+                        setting.forceCompressionAt100Quality,
+                });
+
+                totalOriginalSize += result.originalSize;
+                totalCompressedSize += result.compressedSize;
+                if (result.wasCompressed) {
+                    compressedImagesCount++;
+                }
+
+                return result.buffer;
+            };
+
             let exportDataLength: number | undefined;
             let firstExportData:
                 | {
@@ -468,24 +488,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 exportData.format === Format.JPG ||
                                 exportData.format === Format.PNG
                             ) {
-                                const compressionResult =
-                                    await compressImageBufferWithStats(
-                                        exportData.buffer,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                u8 = compressionResult.buffer;
-                                totalOriginalSize +=
-                                    compressionResult.originalSize;
-                                totalCompressedSize +=
-                                    compressionResult.compressedSize;
-                                if (compressionResult.wasCompressed) {
-                                    compressedImagesCount++;
-                                }
+                                u8 = await compressAndTrack(
+                                    exportData.buffer,
+                                    exportData.format
+                                );
                             } else {
                                 u8 = exportData.buffer;
                             }
@@ -579,55 +585,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 exportData.format === Format.JPG ||
                                 exportData.format === Format.PNG
                             ) {
-                                const result1 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale1,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result2 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale2,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                const result3 =
-                                    await compressImageBufferWithStats(
-                                        exportData.scale3,
-                                        {
-                                            quality: projectData.quality,
-                                            format: exportData.format,
-                                            forceCompressionAt100Quality:
-                                                setting.forceCompressionAt100Quality,
-                                        }
-                                    );
-                                scale1 = result1.buffer;
-                                scale2 = result2.buffer;
-                                scale3 = result3.buffer;
-                                totalOriginalSize +=
-                                    result1.originalSize +
-                                    result2.originalSize +
-                                    result3.originalSize;
-                                totalCompressedSize +=
-                                    result1.compressedSize +
-                                    result2.compressedSize +
-                                    result3.compressedSize;
-                                let scaleCompressionCount = 0;
-                                if (result1.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result2.wasCompressed)
-                                    scaleCompressionCount++;
-                                if (result3.wasCompressed)
-                                    scaleCompressionCount++;
-                                compressedImagesCount += scaleCompressionCount;
+                                scale1 = await compressAndTrack(
+                                    exportData.scale1,
+                                    exportData.format
+                                );
+                                scale2 = await compressAndTrack(
+                                    exportData.scale2,
+                                    exportData.format
+                                );
+                                scale3 = await compressAndTrack(
+                                    exportData.scale3,
+                                    exportData.format
+                                );
                             } else {
                                 scale1 = exportData.scale1;
                                 scale2 = exportData.scale2;
@@ -768,86 +737,26 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     exportData.format === Format.JPG ||
                                     exportData.format === Format.PNG
                                 ) {
-                                    const result1 =
-                                        await compressImageBufferWithStats(
-                                            exportData.scale1,
-                                            {
-                                                quality: projectData.quality,
-                                                format: exportData.format,
-                                                forceCompressionAt100Quality:
-                                                    setting.forceCompressionAt100Quality,
-                                            }
-                                        );
-                                    const result1_5 =
-                                        await compressImageBufferWithStats(
-                                            exportData.scale1_5,
-                                            {
-                                                quality: projectData.quality,
-                                                format: exportData.format,
-                                                forceCompressionAt100Quality:
-                                                    setting.forceCompressionAt100Quality,
-                                            }
-                                        );
-                                    const result2 =
-                                        await compressImageBufferWithStats(
-                                            exportData.scale2,
-                                            {
-                                                quality: projectData.quality,
-                                                format: exportData.format,
-                                                forceCompressionAt100Quality:
-                                                    setting.forceCompressionAt100Quality,
-                                            }
-                                        );
-                                    const result3 =
-                                        await compressImageBufferWithStats(
-                                            exportData.scale3,
-                                            {
-                                                quality: projectData.quality,
-                                                format: exportData.format,
-                                                forceCompressionAt100Quality:
-                                                    setting.forceCompressionAt100Quality,
-                                            }
-                                        );
-                                    const result4 =
-                                        await compressImageBufferWithStats(
-                                            exportData.scale4,
-                                            {
-                                                quality: projectData.quality,
-                                                format: exportData.format,
-                                                forceCompressionAt100Quality:
-                                                    setting.forceCompressionAt100Quality,
-                                            }
-                                        );
-                                    scale1 = result1.buffer;
-                                    scale1_5 = result1_5.buffer;
-                                    scale2 = result2.buffer;
-                                    scale3 = result3.buffer;
-                                    scale4 = result4.buffer;
-                                    totalOriginalSize +=
-                                        result1.originalSize +
-                                        result1_5.originalSize +
-                                        result2.originalSize +
-                                        result3.originalSize +
-                                        result4.originalSize;
-                                    totalCompressedSize +=
-                                        result1.compressedSize +
-                                        result1_5.compressedSize +
-                                        result2.compressedSize +
-                                        result3.compressedSize +
-                                        result4.compressedSize;
-                                    let scaleCompressionCount = 0;
-                                    if (result1.wasCompressed)
-                                        scaleCompressionCount++;
-                                    if (result1_5.wasCompressed)
-                                        scaleCompressionCount++;
-                                    if (result2.wasCompressed)
-                                        scaleCompressionCount++;
-                                    if (result3.wasCompressed)
-                                        scaleCompressionCount++;
-                                    if (result4.wasCompressed)
-                                        scaleCompressionCount++;
-                                    compressedImagesCount +=
-                                        scaleCompressionCount;
+                                    scale1 = await compressAndTrack(
+                                        exportData.scale1,
+                                        exportData.format
+                                    );
+                                    scale1_5 = await compressAndTrack(
+                                        exportData.scale1_5,
+                                        exportData.format
+                                    );
+                                    scale2 = await compressAndTrack(
+                                        exportData.scale2,
+                                        exportData.format
+                                    );
+                                    scale3 = await compressAndTrack(
+                                        exportData.scale3,
+                                        exportData.format
+                                    );
+                                    scale4 = await compressAndTrack(
+                                        exportData.scale4,
+                                        exportData.format
+                                    );
                                 } else {
                                     scale1 = exportData.scale1;
                                     scale1_5 = exportData.scale1_5;

@@ -50,23 +50,6 @@ export const compressImageBuffer = async (
     }
 };
 
-export const compressImageBufferSafe = async (
-    buffer: Uint8Array,
-    options: CompressionOptions
-): Promise<Uint8Array> => {
-    if (options.quality >= 100 && !options.forceCompressionAt100Quality) {
-        return buffer;
-    }
-
-    const compressed = await compressImageBuffer(buffer, options);
-
-    if (compressed.length >= buffer.length) {
-        return buffer;
-    }
-
-    return compressed;
-};
-
 export const compressImageBufferWithStats = async (
     buffer: Uint8Array,
     options: CompressionOptions

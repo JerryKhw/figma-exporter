@@ -1,5 +1,3 @@
-import { Format } from "./enum.js";
-
 export const toBase64 = (buffer: Uint8Array) => {
     const CHUNK_SIZE = 0x8000;
     let binary = "";
@@ -10,21 +8,4 @@ export const toBase64 = (buffer: Uint8Array) => {
     }
 
     return btoa(binary);
-};
-
-export const toBase64Format = (format: string) => {
-    switch (format) {
-        case Format.PNG:
-            return "data:image/png;base64,";
-        case Format.JPG:
-            return "data:image/jpeg;base64,";
-        case Format.WEBP:
-            return "data:image/webp;base64,";
-        case Format.SVG:
-            return "data:image/svg+xml;base64,";
-        case Format.PDF:
-            return "data:application/pdf;base64,";
-        default:
-            return "";
-    }
 };

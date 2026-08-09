@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 
 import { X } from "lucide-react";
 import { Input } from "@ui/components/ui/input";
@@ -11,12 +11,33 @@ export const PreviewItem = ({
     preview,
     onChange,
     onDelete,
+    shouldFocus = false,
+    onFocused,
 }: {
     viewMode: ViewMode;
     preview: PreviewUi;
     onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onDelete: () => void;
+    shouldFocus?: boolean;
+    onFocused?: () => void;
 }) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (!shouldFocus) {
+            return;
+        }
+
+        const input = inputRef.current;
+        if (input) {
+            input.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            input.focus();
+            input.select();
+        }
+
+        onFocused?.();
+    }, [shouldFocus]);
+
     return (
         <div
             key={preview.id}
@@ -63,6 +84,7 @@ export const PreviewItem = ({
                 />
             </div>
             <Input
+                ref={inputRef}
                 placeholder="name"
                 value={preview.name}
                 onChange={onChange}

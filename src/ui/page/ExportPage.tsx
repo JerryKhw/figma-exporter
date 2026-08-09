@@ -76,6 +76,8 @@ export const ExportPage = () => {
         previews,
         updatePreviewName,
         deletePreview,
+        focusPreviewId,
+        setFocusPreviewId,
         setting: { viewMode, perRow, language: lang },
         projectData,
         onChangeFormat,
@@ -125,6 +127,8 @@ export const ExportPage = () => {
                                         );
                                     }}
                                     onDelete={() => onDeletePreview(preview.id)}
+                                    shouldFocus={preview.id === focusPreviewId}
+                                    onFocused={() => setFocusPreviewId(null)}
                                 />
                             ))}
                         </div>
@@ -142,6 +146,8 @@ export const ExportPage = () => {
                                         );
                                     }}
                                     onDelete={() => onDeletePreview(preview.id)}
+                                    shouldFocus={preview.id === focusPreviewId}
+                                    onFocused={() => setFocusPreviewId(null)}
                                 />
                             ))}
                         </div>

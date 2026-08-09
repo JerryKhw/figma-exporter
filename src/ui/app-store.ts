@@ -48,6 +48,8 @@ type AppStore = {
     setPreviews: (preview: PreviewUi[]) => void;
     updatePreviewName: (id: string, name: string) => void;
     deletePreview: (id: string) => void;
+    focusPreviewId: string | null;
+    setFocusPreviewId: (id: string | null) => void;
     setting: Setting;
     globalSetting: Setting;
     projectSetting: Setting;
@@ -186,6 +188,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
         set((state) => ({
             previews: state.previews.filter((preview) => preview.id !== id),
         })),
+    focusPreviewId: null,
+    setFocusPreviewId: (id) => set({ focusPreviewId: id }),
     setting: initSetting,
     globalSetting: initSetting,
     projectSetting: initSetting,
@@ -319,7 +323,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        if (previews.filter((preview) => preview.name === "").length > 0) {
+        const emptyPreview = previews.find((preview) => preview.name === "");
+        if (emptyPreview) {
+            set({ focusPreviewId: emptyPreview.id });
             parent.postMessage(
                 {
                     pluginMessage: {
@@ -334,6 +340,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
         }
 
         if (previewNames.length != new Set(previewNames).size) {
+            const nameCounts = previewNames.reduce(
+                (counts, name) => counts.set(name, (counts.get(name) ?? 0) + 1),
+                new Map<string, number>()
+            );
+            const duplicatePreview = previews.find(
+                (preview) => (nameCounts.get(preview.name) ?? 0) > 1
+            );
+
+            set({ focusPreviewId: duplicatePreview?.id ?? null });
             parent.postMessage(
                 {
                     pluginMessage: {

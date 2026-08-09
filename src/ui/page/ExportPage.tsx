@@ -176,7 +176,9 @@ export const ExportPage = () => {
                                 {(format === Format.JPG ||
                                     format === Format.PNG ||
                                     format === Format.WEBP) && (
-                                    <CustomTooltip content={t("tooltipQuality", lang)}>
+                                    <CustomTooltip
+                                        content={t("tooltipQuality", lang)}
+                                    >
                                         <div className="relative w-16">
                                             <Input
                                                 placeholder="100"
@@ -220,7 +222,12 @@ export const ExportPage = () => {
                                             (format === Format.JPG ||
                                                 format === Format.PNG ||
                                                 format === Format.WEBP) && (
-                                                <CustomTooltip content={t("tooltipScale", lang)}>
+                                                <CustomTooltip
+                                                    content={t(
+                                                        "tooltipScale",
+                                                        lang
+                                                    )}
+                                                >
                                                     <div className="relative w-16">
                                                         <Input
                                                             placeholder="1"
@@ -270,7 +277,12 @@ export const ExportPage = () => {
                                         (format === Format.JPG ||
                                             format === Format.PNG ||
                                             format === Format.WEBP) && (
-                                            <CustomTooltip content={t("tooltipScale", lang)}>
+                                            <CustomTooltip
+                                                content={t(
+                                                    "tooltipScale",
+                                                    lang
+                                                )}
+                                            >
                                                 <div className="relative w-16">
                                                     <Input
                                                         placeholder="1"
@@ -289,7 +301,9 @@ export const ExportPage = () => {
                             )}
 
                             <div className="flex gap-2">
-                                <CustomTooltip content={t("tooltipPrefix", lang)}>
+                                <CustomTooltip
+                                    content={t("tooltipPrefix", lang)}
+                                >
                                     <Input
                                         value={prefix}
                                         onChange={onChangePrefix}
@@ -297,7 +311,9 @@ export const ExportPage = () => {
                                         className="w-20 h-7 text-xs focus:outline-hidden focus:ring-0 focus:border-gray-400 dark:focus:border-gray-500 bg-white dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                                     />
                                 </CustomTooltip>
-                                <CustomTooltip content={t("tooltipSuffix", lang)}>
+                                <CustomTooltip
+                                    content={t("tooltipSuffix", lang)}
+                                >
                                     <Input
                                         value={suffix}
                                         onChange={onChangeSuffix}

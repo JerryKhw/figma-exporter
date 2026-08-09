@@ -27,7 +27,10 @@ export const u8ToArrayBuffer = (u8: Uint8Array): ArrayBuffer => {
     throw new Error("unsupported_buffer_type");
 };
 
-const u8ToWebPBlob = async (u8: Uint8Array, quality: number = 100): Promise<Blob> => {
+const u8ToWebPBlob = async (
+    u8: Uint8Array,
+    quality: number = 100
+): Promise<Blob> => {
     return await arrayBufferToWebP(u8ToArrayBuffer(u8), {
         quality,
     });

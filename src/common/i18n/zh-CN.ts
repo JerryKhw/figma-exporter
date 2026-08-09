@@ -52,6 +52,7 @@ export const zhCN = {
     errorSelectLayer: "请选择一个图层",
     errorEnterFileNames: "请输入图片文件名",
     errorDuplicateFileNames: "发现重复的图片文件名",
+    errorExportFailed: "导出失败，请重试。",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter：导出成功",

@@ -52,6 +52,7 @@ export const ko = {
     errorSelectLayer: "레이어를 선택해주세요",
     errorEnterFileNames: "이미지 파일 이름을 입력해주세요",
     errorDuplicateFileNames: "중복된 이미지 파일 이름이 있습니다",
+    errorExportFailed: "내보내기에 실패했습니다. 다시 시도해 주세요.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : 내보내기 성공",

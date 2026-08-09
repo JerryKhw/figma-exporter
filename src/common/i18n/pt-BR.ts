@@ -8,7 +8,8 @@ export const ptBR = {
     platform: "Plataforma",
     tooltipQuality: "Definir qualidade de compressão (1-100%)",
     tooltipScale: "Definir escala de exportação (0.5-4x)",
-    tooltipPrefix: "Adicionar um prefixo a todos os nomes de arquivo exportados",
+    tooltipPrefix:
+        "Adicionar um prefixo a todos os nomes de arquivo exportados",
     tooltipSuffix: "Adicionar um sufixo a todos os nomes de arquivo exportados",
     prefix: "Prefixo",
     suffix: "Sufixo",
@@ -51,9 +52,12 @@ export const ptBR = {
     // UI error messages
     errorSelectLayer: "Por favor, selecione uma camada",
     errorEnterFileNames: "Por favor, insira os nomes dos arquivos de imagem",
-    errorDuplicateFileNames: "Nomes de arquivos de imagem duplicados encontrados",
+    errorDuplicateFileNames:
+        "Nomes de arquivos de imagem duplicados encontrados",
+    errorExportFailed: "Falha na exportação. Tente novamente.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : Exportação concluída",
-    notifyCompressed: "{count} imagem(ns) comprimida(s), {saved} economizados ({pct}%)",
+    notifyCompressed:
+        "{count} imagem(ns) comprimida(s), {saved} economizados ({pct}%)",
 } satisfies TranslationDict;

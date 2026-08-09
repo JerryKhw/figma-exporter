@@ -8,8 +8,10 @@ export const es419 = {
     platform: "Plataforma",
     tooltipQuality: "Establecer calidad de compresión (1-100%)",
     tooltipScale: "Establecer escala de exportación (0.5-4x)",
-    tooltipPrefix: "Agregar un prefijo a todos los nombres de archivo exportados",
-    tooltipSuffix: "Agregar un sufijo a todos los nombres de archivo exportados",
+    tooltipPrefix:
+        "Agregar un prefijo a todos los nombres de archivo exportados",
+    tooltipSuffix:
+        "Agregar un sufijo a todos los nombres de archivo exportados",
     prefix: "Prefijo",
     suffix: "Sufijo",
     settings: "Configuración",
@@ -31,7 +33,8 @@ export const es419 = {
     itemsPerRow: "Elementos por fila:",
     actions: "Acciones",
     autoCloseAfterExport: "Cerrar automáticamente al exportar",
-    reloadPreviewOnSelectionChange: "Recargar vista previa al cambiar selección",
+    reloadPreviewOnSelectionChange:
+        "Recargar vista previa al cambiar selección",
     forceCompressionAt100Quality: "Forzar compresión al 100% de calidad",
     previewNameCase: "Formato del nombre de vista previa",
     original: "Original",
@@ -50,10 +53,14 @@ export const es419 = {
 
     // UI error messages
     errorSelectLayer: "Por favor, selecciona una capa",
-    errorEnterFileNames: "Por favor, ingresa los nombres de los archivos de imagen",
-    errorDuplicateFileNames: "Se encontraron nombres de archivo de imagen duplicados",
+    errorEnterFileNames:
+        "Por favor, ingresa los nombres de los archivos de imagen",
+    errorDuplicateFileNames:
+        "Se encontraron nombres de archivo de imagen duplicados",
+    errorExportFailed: "Error al exportar. Inténtalo de nuevo.",
 
     // Plugin notify messages
     notifySuccess: "Figma Exporter : Exportación exitosa",
-    notifyCompressed: "{count} imagen(es) comprimida(s), {saved} ahorrados ({pct}%)",
+    notifyCompressed:
+        "{count} imagen(es) comprimida(s), {saved} ahorrados ({pct}%)",
 } satisfies TranslationDict;

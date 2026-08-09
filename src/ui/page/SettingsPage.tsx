@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 
 import { useAppStore } from "@ui/app-store";
-import { Language, SettingScope, ViewMode, NameCase, Theme } from "@common/enum";
+import {
+    Language,
+    SettingScope,
+    ViewMode,
+    NameCase,
+    Theme,
+} from "@common/enum";
 import { t } from "@common/i18n";
 import { Button } from "@ui/components/ui/button";
 import { Input } from "@ui/components/ui/input";
@@ -38,7 +44,9 @@ export const SettingsPage = () => {
     } = useAppStore();
 
     const { settingScope } = projectData;
-    const lang = (settingScope === SettingScope.GLOBAL ? globalSetting : projectSetting).language ?? Language.EN;
+    const lang =
+        (settingScope === SettingScope.GLOBAL ? globalSetting : projectSetting)
+            .language ?? Language.EN;
 
     const [tmpSettingScope, setTmpSettingScope] = useState(settingScope);
     const [tmpSetting, setTmpSetting] = useState(
@@ -136,12 +144,16 @@ export const SettingsPage = () => {
                             {tmpSettingScope === SettingScope.GLOBAL ? (
                                 <>
                                     <Globe className="size-3" />
-                                    <span>{t("configuringGlobal", tmpLang)}</span>
+                                    <span>
+                                        {t("configuringGlobal", tmpLang)}
+                                    </span>
                                 </>
                             ) : (
                                 <>
                                     <FolderOpen className="size-3" />
-                                    <span>{t("configuringProject", tmpLang)}</span>
+                                    <span>
+                                        {t("configuringProject", tmpLang)}
+                                    </span>
                                 </>
                             )}
                         </div>
@@ -237,16 +249,36 @@ export const SettingsPage = () => {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value={Language.EN}>English</SelectItem>
-                                <SelectItem value={Language.JA}>日本語</SelectItem>
-                                <SelectItem value={Language.FR}>Français</SelectItem>
-                                <SelectItem value={Language.DE}>Deutsch</SelectItem>
-                                <SelectItem value={Language.ES}>Español (España)</SelectItem>
-                                <SelectItem value={Language.ES_419}>Español (Latinoamérica)</SelectItem>
-                                <SelectItem value={Language.KO}>한국어</SelectItem>
-                                <SelectItem value={Language.PT_BR}>Português (Brasil)</SelectItem>
-                                <SelectItem value={Language.ZH_CN}>简体中文</SelectItem>
-                                <SelectItem value={Language.ZH_TW}>繁體中文</SelectItem>
+                                <SelectItem value={Language.EN}>
+                                    English
+                                </SelectItem>
+                                <SelectItem value={Language.JA}>
+                                    日本語
+                                </SelectItem>
+                                <SelectItem value={Language.FR}>
+                                    Français
+                                </SelectItem>
+                                <SelectItem value={Language.DE}>
+                                    Deutsch
+                                </SelectItem>
+                                <SelectItem value={Language.ES}>
+                                    Español (España)
+                                </SelectItem>
+                                <SelectItem value={Language.ES_419}>
+                                    Español (Latinoamérica)
+                                </SelectItem>
+                                <SelectItem value={Language.KO}>
+                                    한국어
+                                </SelectItem>
+                                <SelectItem value={Language.PT_BR}>
+                                    Português (Brasil)
+                                </SelectItem>
+                                <SelectItem value={Language.ZH_CN}>
+                                    简体中文
+                                </SelectItem>
+                                <SelectItem value={Language.ZH_TW}>
+                                    繁體中文
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -321,8 +353,16 @@ export const SettingsPage = () => {
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {Array.from({ length: 19 }, (_, i) => i + 2).map((n) => (
-                                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                                            {Array.from(
+                                                { length: 19 },
+                                                (_, i) => i + 2
+                                            ).map((n) => (
+                                                <SelectItem
+                                                    key={n}
+                                                    value={String(n)}
+                                                >
+                                                    {n}
+                                                </SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -352,7 +392,10 @@ export const SettingsPage = () => {
                             </div>
                             <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-700 dark:text-gray-300">
-                                    {t("reloadPreviewOnSelectionChange", tmpLang)}
+                                    {t(
+                                        "reloadPreviewOnSelectionChange",
+                                        tmpLang
+                                    )}
                                 </span>
                                 <ToggleSwitch
                                     checked={
@@ -510,7 +553,10 @@ export const SettingsPage = () => {
                                             →
                                         </span>
                                         <Input
-                                            placeholder={t("replaceWith", tmpLang)}
+                                            placeholder={t(
+                                                "replaceWith",
+                                                tmpLang
+                                            )}
                                             value={rule.replacement}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({
@@ -597,7 +643,10 @@ export const SettingsPage = () => {
                                             →
                                         </span>
                                         <Input
-                                            placeholder={t("replaceWith", tmpLang)}
+                                            placeholder={t(
+                                                "replaceWith",
+                                                tmpLang
+                                            )}
                                             value={rule.replacement}
                                             onChange={(e) => {
                                                 setTmpSetting((prev) => ({

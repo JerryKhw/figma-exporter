@@ -1,11 +1,18 @@
 import { Format } from "./enum.js";
 
 export const toBase64 = (buffer: Uint8Array) => {
-    return btoa(
-        buffer.reduce(function (data, byte) {
-            return data + String.fromCharCode(byte);
-        }, "")
-    );
+    const CHUNK_SIZE = 0x8000;
+    let binary = "";
+
+    for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
+        const chunk = buffer.subarray(i, i + CHUNK_SIZE);
+        binary += String.fromCharCode.apply(
+            null,
+            chunk as unknown as number[]
+        );
+    }
+
+    return btoa(binary);
 };
 
 export const toBase64Format = (format: string) => {

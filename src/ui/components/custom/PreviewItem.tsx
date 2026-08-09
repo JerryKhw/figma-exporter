@@ -13,6 +13,7 @@ export const PreviewItem = ({
     onDelete,
     shouldFocus = false,
     onFocused,
+    invalidColorClass,
 }: {
     viewMode: ViewMode;
     preview: PreviewUi;
@@ -20,6 +21,7 @@ export const PreviewItem = ({
     onDelete: () => void;
     shouldFocus?: boolean;
     onFocused?: () => void;
+    invalidColorClass?: string;
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -92,7 +94,9 @@ export const PreviewItem = ({
                     viewMode === ViewMode.LIST
                         ? "flex-1 text-left"
                         : "text-center w-full"
-                } border-gray-200 focus:outline-hidden focus:ring-0 focus:border-gray-400`}
+                } focus:outline-hidden focus:ring-0 ${
+                    invalidColorClass ?? "border-gray-200 focus:border-gray-400"
+                }`}
             />
         </div>
     );

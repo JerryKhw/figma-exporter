@@ -68,6 +68,17 @@ const platformList = [
     },
 ];
 
+const EMPTY_NAME_COLOR = "border-red-500 focus:border-red-500";
+
+const DUPLICATE_NAME_COLORS = [
+    "border-orange-500 focus:border-orange-500",
+    "border-violet-500 focus:border-violet-500",
+    "border-blue-500 focus:border-blue-500",
+    "border-pink-500 focus:border-pink-500",
+    "border-teal-500 focus:border-teal-500",
+    "border-amber-500 focus:border-amber-500",
+];
+
 export const ExportPage = () => {
     const {
         isDev,
@@ -78,6 +89,7 @@ export const ExportPage = () => {
         deletePreview,
         focusPreviewId,
         setFocusPreviewId,
+        validationActive,
         setting: { viewMode, perRow, language: lang },
         projectData,
         onChangeFormat,
@@ -104,6 +116,51 @@ export const ExportPage = () => {
         return format === Format.SVG || format === Format.PDF;
     }, [format]);
 
+    const invalidColorById = useMemo(() => {
+        const colorById = new Map<string, string>();
+
+        if (!validationActive) {
+            return colorById;
+        }
+
+        const nameCounts = new Map<string, number>();
+        previews.forEach((preview) => {
+            nameCounts.set(
+                preview.name,
+                (nameCounts.get(preview.name) ?? 0) + 1
+            );
+        });
+
+        const colorByDuplicateName = new Map<string, string>();
+        previews.forEach((preview) => {
+            if (
+                preview.name !== "" &&
+                (nameCounts.get(preview.name) ?? 0) > 1 &&
+                !colorByDuplicateName.has(preview.name)
+            ) {
+                colorByDuplicateName.set(
+                    preview.name,
+                    DUPLICATE_NAME_COLORS[
+                        colorByDuplicateName.size % DUPLICATE_NAME_COLORS.length
+                    ]
+                );
+            }
+        });
+
+        previews.forEach((preview) => {
+            if (preview.name === "") {
+                colorById.set(preview.id, EMPTY_NAME_COLOR);
+            } else if (colorByDuplicateName.has(preview.name)) {
+                colorById.set(
+                    preview.id,
+                    colorByDuplicateName.get(preview.name)!
+                );
+            }
+        });
+
+        return colorById;
+    }, [validationActive, previews]);
+
     return (
         <>
             <div className="size-full bg-white dark:bg-[#3A3A3A] flex flex-col relative transition-colors duration-200">
@@ -129,6 +186,9 @@ export const ExportPage = () => {
                                     onDelete={() => onDeletePreview(preview.id)}
                                     shouldFocus={preview.id === focusPreviewId}
                                     onFocused={() => setFocusPreviewId(null)}
+                                    invalidColorClass={invalidColorById.get(
+                                        preview.id
+                                    )}
                                 />
                             ))}
                         </div>
@@ -148,6 +208,9 @@ export const ExportPage = () => {
                                     onDelete={() => onDeletePreview(preview.id)}
                                     shouldFocus={preview.id === focusPreviewId}
                                     onFocused={() => setFocusPreviewId(null)}
+                                    invalidColorClass={invalidColorById.get(
+                                        preview.id
+                                    )}
                                 />
                             ))}
                         </div>

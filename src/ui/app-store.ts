@@ -50,6 +50,7 @@ type AppStore = {
     deletePreview: (id: string) => void;
     focusPreviewId: string | null;
     setFocusPreviewId: (id: string | null) => void;
+    validationActive: boolean;
     setting: Setting;
     globalSetting: Setting;
     projectSetting: Setting;
@@ -190,6 +191,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         })),
     focusPreviewId: null,
     setFocusPreviewId: (id) => set({ focusPreviewId: id }),
+    validationActive: false,
     setting: initSetting,
     globalSetting: initSetting,
     projectSetting: initSetting,
@@ -323,9 +325,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
             return;
         }
 
-        const emptyPreview = previews.find((preview) => preview.name === "");
-        if (emptyPreview) {
-            set({ focusPreviewId: emptyPreview.id });
+        const emptyIds = previews
+            .filter((preview) => preview.name === "")
+            .map((preview) => preview.id);
+        if (emptyIds.length > 0) {
+            set({ validationActive: true, focusPreviewId: emptyIds[0] });
             parent.postMessage(
                 {
                     pluginMessage: {
@@ -344,11 +348,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
                 (counts, name) => counts.set(name, (counts.get(name) ?? 0) + 1),
                 new Map<string, number>()
             );
-            const duplicatePreview = previews.find(
-                (preview) => (nameCounts.get(preview.name) ?? 0) > 1
-            );
+            const duplicateIds = previews
+                .filter((preview) => (nameCounts.get(preview.name) ?? 0) > 1)
+                .map((preview) => preview.id);
 
-            set({ focusPreviewId: duplicatePreview?.id ?? null });
+            set({
+                validationActive: true,
+                focusPreviewId: duplicateIds[0] ?? null,
+            });
             parent.postMessage(
                 {
                     pluginMessage: {
@@ -378,7 +385,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             scale: normalizedScale,
         };
 
-        set({ isLoading: true });
+        set({ isLoading: true, validationActive: false });
 
         parent.postMessage(
             {

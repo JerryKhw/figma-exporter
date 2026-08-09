@@ -7,7 +7,7 @@ export enum ProjectKey {
 
 export enum GlobalKey {
     SIZE = "SIZE",
-    SETTING = "SETTING",
+    SETTING = "GLOBAL_SETTING",
 }
 
 export const getData = (

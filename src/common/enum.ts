@@ -3,6 +3,7 @@ export enum PluginMessageType {
     INIT = "INIT",
     EXPORT_WEB = "EXPORT_WEB",
     EXPORT_ANDROID = "EXPORT_ANDROID",
+    EXPORT_ANDROID_MIPMAP = "EXPORT_ANDROID_MIPMAP",
     EXPORT_iOS = "EXPORT_iOS",
     EXPORT_RN = "EXPORT_RN",
     EXPORT_FLUTTER = "EXPORT_FLUTTER",
@@ -21,6 +22,7 @@ export enum UiMessageType {
 export enum Platform {
     WEB = "web",
     ANDROID = "android",
+    ANDROID_MIPMAP = "androidMipmap",
     iOS = "ios",
     RN = "rn",
     FLUTTER = "flutter",

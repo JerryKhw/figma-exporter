@@ -56,6 +56,10 @@ const platformList = [
         value: Platform.ANDROID,
     },
     {
+        name: "Android (mipmap)",
+        value: Platform.ANDROID_MIPMAP,
+    },
+    {
         name: "iOS",
         value: Platform.iOS,
     },

@@ -44,6 +44,7 @@ const App = () => {
                         saveExport(type, data, ExportDefaultSchema);
                         break;
                     case PluginMessageType.EXPORT_ANDROID:
+                    case PluginMessageType.EXPORT_ANDROID_MIPMAP:
                     case PluginMessageType.EXPORT_FLUTTER:
                         saveExport(type, data, ExportScale5Schema);
                         break;

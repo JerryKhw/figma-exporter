@@ -41,6 +41,14 @@ import {
 } from "./lib/utils";
 import { zip } from "fflate";
 
+// Android density buckets live under `drawable-*` for regular assets and
+// `mipmap-*` for launcher/adaptive icons.
+const androidResourceDir = (
+    type:
+        | PluginMessageType.EXPORT_ANDROID
+        | PluginMessageType.EXPORT_ANDROID_MIPMAP
+) => (type === PluginMessageType.EXPORT_ANDROID_MIPMAP ? "mipmap" : "drawable");
+
 type AppStore = {
     isDev: boolean;
     isLoading: boolean;
@@ -74,6 +82,7 @@ type AppStore = {
             | PluginMessageType.EXPORT_PDF
             | PluginMessageType.EXPORT_WEB
             | PluginMessageType.EXPORT_ANDROID
+            | PluginMessageType.EXPORT_ANDROID_MIPMAP
             | PluginMessageType.EXPORT_FLUTTER
             | PluginMessageType.EXPORT_iOS
             | PluginMessageType.EXPORT_RN,
@@ -708,25 +717,29 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                     };
 
                                     switch (type) {
-                                        case PluginMessageType.EXPORT_ANDROID: {
+                                        case PluginMessageType.EXPORT_ANDROID:
+                                        case PluginMessageType.EXPORT_ANDROID_MIPMAP: {
+                                            const resDir =
+                                                androidResourceDir(type);
+
                                             addPartsToZip(
-                                                `drawable-mdpi/${exportName}`,
+                                                `${resDir}-mdpi/${exportName}`,
                                                 results[0].parts
                                             );
                                             addPartsToZip(
-                                                `drawable-hdpi/${exportName}`,
+                                                `${resDir}-hdpi/${exportName}`,
                                                 results[1].parts
                                             );
                                             addPartsToZip(
-                                                `drawable-xhdpi/${exportName}`,
+                                                `${resDir}-xhdpi/${exportName}`,
                                                 results[2].parts
                                             );
                                             addPartsToZip(
-                                                `drawable-xxhdpi/${exportName}`,
+                                                `${resDir}-xxhdpi/${exportName}`,
                                                 results[3].parts
                                             );
                                             addPartsToZip(
-                                                `drawable-xxxhdpi/${exportName}`,
+                                                `${resDir}-xxxhdpi/${exportName}`,
                                                 results[4].parts
                                             );
                                             break;
@@ -790,21 +803,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
                                 }
 
                                 switch (type) {
-                                    case PluginMessageType.EXPORT_ANDROID: {
+                                    case PluginMessageType.EXPORT_ANDROID:
+                                    case PluginMessageType.EXPORT_ANDROID_MIPMAP: {
+                                        const resDir = androidResourceDir(type);
+
                                         zipData[
-                                            `drawable-mdpi/${exportName}.${exportData.format}`
+                                            `${resDir}-mdpi/${exportName}.${exportData.format}`
                                         ] = scale1;
                                         zipData[
-                                            `drawable-hdpi/${exportName}.${exportData.format}`
+                                            `${resDir}-hdpi/${exportName}.${exportData.format}`
                                         ] = scale1_5;
                                         zipData[
-                                            `drawable-xhdpi/${exportName}.${exportData.format}`
+                                            `${resDir}-xhdpi/${exportName}.${exportData.format}`
                                         ] = scale2;
                                         zipData[
-                                            `drawable-xxhdpi/${exportName}.${exportData.format}`
+                                            `${resDir}-xxhdpi/${exportName}.${exportData.format}`
                                         ] = scale3;
                                         zipData[
-                                            `drawable-xxxhdpi/${exportName}.${exportData.format}`
+                                            `${resDir}-xxxhdpi/${exportName}.${exportData.format}`
                                         ] = scale4;
                                         break;
                                     }

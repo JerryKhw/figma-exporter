@@ -481,6 +481,7 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                             break;
                         }
                         case Platform.ANDROID:
+                        case Platform.ANDROID_MIPMAP:
                         case Platform.FLUTTER: {
                             const exports: ExportScale5[] = await Promise.all(
                                 tmps.map(async (tmp) => {
@@ -529,6 +530,13 @@ figma.ui.onmessage = async (msg: UiMessage) => {
                                 case Platform.ANDROID: {
                                     figma.ui.postMessage({
                                         type: PluginMessageType.EXPORT_ANDROID,
+                                        data: exports,
+                                    });
+                                    break;
+                                }
+                                case Platform.ANDROID_MIPMAP: {
+                                    figma.ui.postMessage({
+                                        type: PluginMessageType.EXPORT_ANDROID_MIPMAP,
                                         data: exports,
                                     });
                                     break;

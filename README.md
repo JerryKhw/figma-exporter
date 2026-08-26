@@ -62,6 +62,17 @@ When exporting for different platforms, assets are organized as follows:
 │   │   └── img.png
 │   └── drawable-xxxhdpi
 │       └── img.png
+├── Android (mipmap)
+│   ├── mipmap-mdpi
+│   │   └── img.png
+│   ├── mipmap-hdpi
+│   │   └── img.png
+│   ├── mipmap-xhdpi
+│   │   └── img.png
+│   ├── mipmap-xxhdpi
+│   │   └── img.png
+│   └── mipmap-xxxhdpi
+│       └── img.png
 ├── iOS
 │   ├── img.png
 │   ├── img@2x.png
